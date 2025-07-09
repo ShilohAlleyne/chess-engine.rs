@@ -9,7 +9,7 @@ use position::Position;
 
 fn main() {
     let attacks = AttackTables::new();
-    if let Some(mask) = attacks.bishop.white {
+    if let Some(mask) = attacks.knight.white {
         let occupancy = Bitboard::new()
             .set_occupancy(4095, &mask[Position::D4 as usize]);
         println!("{}", occupancy);

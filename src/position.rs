@@ -1,6 +1,9 @@
 use itertools::Itertools;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use colored::Colorize;
+use std::fmt;
+
 
 // The board positions
 #[derive(Debug, EnumIter, Clone, Copy)]
@@ -65,3 +68,43 @@ impl From<bool> for Colour {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy)]
+pub enum Piece {
+    Red(Kind),
+    White(Kind),
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Kind {
+    Bishop,
+    King,
+    Knight,
+    Pawn,
+    Queen,
+    Rook,
+}
+
+impl fmt::Display for Piece {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Piece::Red(piece) => write!(f, "{}", piece.to_string().red()),
+            Piece::White(piece) => write!(f, "{}", piece.to_string().white()),
+        }
+    }
+}
+
+impl fmt::Display for Kind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let piece: &str = match self {
+            Kind::Bishop => "\u{2657}",
+            Kind::King => "\u{2654}",
+            Kind::Knight => "\u{2658}",
+            Kind::Pawn => "\u{2659}\u{FE0E}",
+            Kind::Queen => "\u{2655}",
+            Kind::Rook => "\u{2656}",
+        };
+        write!(f, "{}", piece)
+    }
+}
+

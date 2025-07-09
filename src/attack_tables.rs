@@ -1,27 +1,29 @@
-use strum::IntoEnumIterator;
 use itertools::Itertools;
+use strum::IntoEnumIterator;
 
-
-use crate::{bitboard::Bitboard, position::{Colour, Position}};
+use crate::{
+    bitboard::Bitboard,
+    position::{Colour, Position},
+};
 
 // This Struct will hold all the pre-generated
-// attack tables for each piece 
+// attack tables for each piece
 pub struct AttackTables {
-    pub prawn:  AttkTbl,
+    pub prawn: AttkTbl,
     pub knight: AttkTbl,
-    pub king:   AttkTbl,
-    pub bishop: AttkTbl,
-    pub rook:   AttkTbl,
+    pub king: AttkTbl,
+    // pub bishop: AttkTbl,
+    // pub rook: AttkTbl,
 }
 
 impl AttackTables {
     pub fn new() -> Self {
         Self {
-            prawn:  AttkTbl::gen_prawn_attk_tbl(),
+            prawn: AttkTbl::gen_prawn_attk_tbl(),
             knight: AttkTbl::gen_knight_attk_tbl(),
-            king:   AttkTbl::gen_king_attk_tbl(),
-            bishop: AttkTbl::gen_bishop_attk_tbl(),
-            rook:   AttkTbl::gen_rook_attk_tbl(),
+            king: AttkTbl::gen_king_attk_tbl(),
+            // bishop: AttkTbl::gen_slider_attacks(true),
+            // rook: AttkTbl::gen_slider_attacks(false),
         }
     }
 }
@@ -35,26 +37,16 @@ pub struct AttkTbl {
 impl AttkTbl {
     // bishop relevant occupancy bit count for every square on board
     const BISHOP_RELEVANT_BITS: [u64; 64] = [
-        6, 5, 5, 5, 5, 5, 5, 6,
-        5, 5, 5, 5, 5, 5, 5, 5,
-        5, 5, 7, 7, 7, 7, 5, 5,
-        5, 5, 7, 9, 9, 7, 5, 5,
-        5, 5, 7, 9, 9, 7, 5, 5,
-        5, 5, 7, 7, 7, 7, 5, 5,
-        5, 5, 5, 5, 5, 5, 5, 5,
-        6, 5, 5, 5, 5, 5, 5, 6
+        6, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 7, 7, 7, 7, 5, 5, 5, 5, 7, 9, 9, 7,
+        5, 5, 5, 5, 7, 9, 9, 7, 5, 5, 5, 5, 7, 7, 7, 7, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5,
+        5, 5, 5, 6,
     ];
 
     // rook relevant occupancy bit count for every square on board
     const ROOK_RELEVANT_BITS: [u64; 64] = [
-        12, 11, 11, 11, 11, 11, 11, 12,
-        11, 10, 10, 10, 10, 10, 10, 11,
-        11, 10, 10, 10, 10, 10, 10, 11,
-        11, 10, 10, 10, 10, 10, 10, 11,
-        11, 10, 10, 10, 10, 10, 10, 11,
-        11, 10, 10, 10, 10, 10, 10, 11,
-        11, 10, 10, 10, 10, 10, 10, 11,
-        12, 11, 11, 11, 11, 11, 11, 12
+        12, 11, 11, 11, 11, 11, 11, 12, 11, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 10, 10, 10, 10,
+        11, 11, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 10, 10, 10,
+        10, 11, 11, 10, 10, 10, 10, 10, 10, 11, 12, 11, 11, 11, 11, 11, 11, 12,
     ];
 
     // rook magic numbers
@@ -122,7 +114,7 @@ impl AttkTbl {
         0x20030a0244872,
         0x12001008414402,
         0x2006104900a0804,
-        0x1004081002402
+        0x1004081002402,
     ];
 
     const BISHOP_MAGIC_NUMBERS: [u64; 64] = [
@@ -192,7 +184,6 @@ impl AttkTbl {
         0x4010011029020020,
     ];
 
-
     // Gnerates a attack board for every pos
     // Higher order, uses a attack gen func as an arg
     fn gen_attacks<F>(f: F, side: Colour) -> Option<[Bitboard; 64]>
@@ -218,8 +209,7 @@ impl AttkTbl {
 
     fn mask_prawn_attacks(position: Position, side: &Colour) -> Bitboard {
         let mut attacks: u64 = 0;
-        let bitboard = Bitboard::new()
-            .set_bit(position);
+        let bitboard = Bitboard::new().set_bit(position);
 
         match side {
             Colour::White => {
@@ -229,7 +219,7 @@ impl AttkTbl {
                 if (bitboard.0 >> 9) & Bitboard::NOT_H_FILE != 0 {
                     attacks |= bitboard.0 >> 9;
                 }
-            },
+            }
             Colour::Black => {
                 if (bitboard.0 << 7) & Bitboard::NOT_H_FILE != 0 {
                     attacks |= bitboard.0 << 7;
@@ -254,20 +244,35 @@ impl AttkTbl {
     }
 
     fn mask_knight_attacks(position: Position, _side: &Colour) -> Bitboard {
-        let  mut attacks: u64 = 0;
-        let bitboard = Bitboard::new()
-            .set_bit(position);
+        let mut attacks: u64 = 0;
+        let bitboard = Bitboard::new().set_bit(position);
 
         // generate knight attacks
-        if bitboard.0 >> 17 & Bitboard::NOT_H_FILE != 0 { attacks |= bitboard.0 >> 17; }
-        if bitboard.0 >> 15 & Bitboard::NOT_A_FILE != 0 { attacks |= bitboard.0 >> 15; }
-        if bitboard.0 >> 10 & Bitboard::NOT_HG_FILE != 0 { attacks |= bitboard.0 >> 10; }
-        if bitboard.0 >> 6 & Bitboard::NOT_AB_FILE != 0 { attacks |= bitboard.0 >> 6; }
+        if bitboard.0 >> 17 & Bitboard::NOT_H_FILE != 0 {
+            attacks |= bitboard.0 >> 17;
+        }
+        if bitboard.0 >> 15 & Bitboard::NOT_A_FILE != 0 {
+            attacks |= bitboard.0 >> 15;
+        }
+        if bitboard.0 >> 10 & Bitboard::NOT_HG_FILE != 0 {
+            attacks |= bitboard.0 >> 10;
+        }
+        if bitboard.0 >> 6 & Bitboard::NOT_AB_FILE != 0 {
+            attacks |= bitboard.0 >> 6;
+        }
 
-        if bitboard.0 << 17 & Bitboard::NOT_A_FILE != 0 { attacks |= bitboard.0 << 17; }
-        if bitboard.0 << 15 & Bitboard::NOT_H_FILE != 0 { attacks |= bitboard.0 << 15; }
-        if bitboard.0 << 10 & Bitboard::NOT_AB_FILE != 0 { attacks |= bitboard.0 << 10; }
-        if bitboard.0 << 6 & Bitboard::NOT_HG_FILE != 0 { attacks |= bitboard.0 << 6; }
+        if bitboard.0 << 17 & Bitboard::NOT_A_FILE != 0 {
+            attacks |= bitboard.0 << 17;
+        }
+        if bitboard.0 << 15 & Bitboard::NOT_H_FILE != 0 {
+            attacks |= bitboard.0 << 15;
+        }
+        if bitboard.0 << 10 & Bitboard::NOT_AB_FILE != 0 {
+            attacks |= bitboard.0 << 10;
+        }
+        if bitboard.0 << 6 & Bitboard::NOT_HG_FILE != 0 {
+            attacks |= bitboard.0 << 6;
+        }
 
         Bitboard::from(attacks)
     }
@@ -282,36 +287,41 @@ impl AttkTbl {
     }
 
     fn mask_king_attacks(position: Position, _side: &Colour) -> Bitboard {
-        let bitboard = Bitboard::new()
-            .set_bit(position);
+        let bitboard = Bitboard::new().set_bit(position);
         let mut attacks: u64 = 0;
 
         // generate knight attacks
-        if bitboard.0 >> 8 != 0 { attacks |= bitboard.0 >> 8; }
-        if bitboard.0 >> 9 & Bitboard::NOT_H_FILE != 0 { attacks |= bitboard.0 >> 9; }
-        if bitboard.0 >> 7 & Bitboard::NOT_A_FILE != 0 { attacks |= bitboard.0 >> 7; }
-        if bitboard.0 >> 1 & Bitboard::NOT_H_FILE != 0 { attacks |= bitboard.0 >> 1; }
+        if bitboard.0 >> 8 != 0 {
+            attacks |= bitboard.0 >> 8;
+        }
+        if bitboard.0 >> 9 & Bitboard::NOT_H_FILE != 0 {
+            attacks |= bitboard.0 >> 9;
+        }
+        if bitboard.0 >> 7 & Bitboard::NOT_A_FILE != 0 {
+            attacks |= bitboard.0 >> 7;
+        }
+        if bitboard.0 >> 1 & Bitboard::NOT_H_FILE != 0 {
+            attacks |= bitboard.0 >> 1;
+        }
 
-        if bitboard.0 << 8 != 0 { attacks |= bitboard.0 << 8; }
-        if bitboard.0 << 9 & Bitboard::NOT_H_FILE != 0 { attacks |= bitboard.0 << 9; }
-        if bitboard.0 << 7 & Bitboard::NOT_A_FILE != 0 { attacks |= bitboard.0 << 7; }
-        if bitboard.0 << 1 & Bitboard::NOT_H_FILE != 0 { attacks |= bitboard.0 << 1; }
+        if bitboard.0 << 8 != 0 {
+            attacks |= bitboard.0 << 8;
+        }
+        if bitboard.0 << 9 & Bitboard::NOT_H_FILE != 0 {
+            attacks |= bitboard.0 << 9;
+        }
+        if bitboard.0 << 7 & Bitboard::NOT_A_FILE != 0 {
+            attacks |= bitboard.0 << 7;
+        }
+        if bitboard.0 << 1 & Bitboard::NOT_H_FILE != 0 {
+            attacks |= bitboard.0 << 1;
+        }
 
         Bitboard::from(attacks)
     }
 
-    // Bishop
-    fn gen_bishop_attk_tbl() -> Self {
-        // Same as Knights
-        Self {
-            white: Self::gen_attacks(Self::mask_bishop_attacks, Colour::White),
-            black: None,
-        }
-    }
-
     // Mask occupancy bits for a magic bitboard
     fn mask_bishop_attacks(position: Position, _side: &Colour) -> Bitboard {
-
         let tb = |r: u64, f: u64| (r * 8 + f);
 
         // Target ranks and files
@@ -320,27 +330,32 @@ impl AttkTbl {
 
         let mut attacks: u64 = 0;
 
-        attacks = (t_rank + 1..=6).zip(t_file + 1..=6)
+        attacks = (t_rank + 1..=6)
+            .zip(t_file + 1..=6)
             .fold(attacks, |acc, (r, f)| acc | 1u64 << tb(r, f));
 
-        attacks = (1..t_rank).rev().zip(t_file + 1..=6)
+        attacks = (1..t_rank)
+            .rev()
+            .zip(t_file + 1..=6)
             .fold(attacks, |acc, (r, f)| acc | 1u64 << tb(r, f));
 
-        attacks = (t_rank + 1..=6).zip((1..t_file).rev())
+        attacks = (t_rank + 1..=6)
+            .zip((1..t_file).rev())
             .fold(attacks, |acc, (r, f)| acc | 1u64 << tb(r, f));
 
-        attacks = (1..t_rank).rev().zip((1..t_file).rev())
+        attacks = (1..t_rank)
+            .rev()
+            .zip((1..t_file).rev())
             .fold(attacks, |acc, (r, f)| acc | 1u64 << tb(r, f));
-
 
         Bitboard::from(attacks)
     }
 
- 
     // Generate bishop attacks on the fly
     fn fly_gen_bishop_attks(position: impl Into<u64>, block: &Bitboard) -> Bitboard {
- 
-        let idx = |rank: u64, file: u64| Position::from_u64(rank * 8 + file).expect("Out of bounds rank or file");
+        let idx = |rank: u64, file: u64| {
+            Position::from_u64(rank * 8 + file).expect("Out of bounds rank or file")
+        };
 
         // Target ranks and files
         let pos: u64 = position.into();
@@ -348,22 +363,28 @@ impl AttkTbl {
         let t_file: u64 = pos % 8;
 
         // // Bottom right
-        let mut attacks = (t_rank + 1..=7).zip(t_file + 1..=7)
+        let mut attacks = (t_rank + 1..=7)
+            .zip(t_file + 1..=7)
             .take_while_inclusive(|&(r, f)| !block.is_occupied(idx(r, f)))
             .fold(0u64, |acc, (r, f)| acc | 1u64 << idx(r, f) as u64);
 
         // Top right
-        attacks = (0..t_rank).rev().zip(t_file + 1..=7)
+        attacks = (0..t_rank)
+            .rev()
+            .zip(t_file + 1..=7)
             .take_while_inclusive(|&(r, f)| !block.is_occupied(idx(r, f)))
             .fold(attacks, |acc, (r, f)| acc | 1u64 << idx(r, f) as u64);
 
         // Bottom left
-        attacks = (t_rank + 1..=7).zip((0..t_file).rev())
+        attacks = (t_rank + 1..=7)
+            .zip((0..t_file).rev())
             .take_while_inclusive(|&(r, f)| !block.is_occupied(idx(r, f)))
             .fold(attacks, |acc, (r, f)| acc | 1u64 << idx(r, f) as u64);
 
         // Top left
-        attacks = (0..t_rank).rev().zip((0..t_file).rev())
+        attacks = (0..t_rank)
+            .rev()
+            .zip((0..t_file).rev())
             .take_while_inclusive(|&(r, f)| !block.is_occupied(idx(r, f)))
             .fold(attacks, |acc, (r, f)| acc | 1u64 << idx(r, f) as u64);
 
@@ -401,8 +422,9 @@ impl AttkTbl {
 
     // Generate Rook Attacks on the fly
     fn fly_gen_rook_attks(position: Position, block: &Bitboard) -> Bitboard {
-
-        let idx = |rank: u64, file: u64| Position::from_u64(rank * 8 + file).expect("Out of bounds rank or file");
+        let idx = |rank: u64, file: u64| {
+            Position::from_u64(rank * 8 + file).expect("Out of bounds rank or file")
+        };
 
         // Target ranks and files
         let t_rank: u64 = position as u64 / 8; // Cloning an int is negligible
@@ -413,7 +435,8 @@ impl AttkTbl {
             .take_while_inclusive(|&r| !block.is_occupied(idx(r, t_file)))
             .fold(0u64, |acc, r| acc | 1u64 << idx(r, t_file) as u64);
 
-        attacks = (0..t_rank).rev()
+        attacks = (0..t_rank)
+            .rev()
             .take_while_inclusive(|&r| !block.is_occupied(idx(r, t_file)))
             .fold(attacks, |acc, r| acc | 1u64 << idx(r, t_file) as u64);
 
@@ -422,17 +445,50 @@ impl AttkTbl {
             .take_while_inclusive(|&r| !block.is_occupied(idx(r, t_rank)))
             .fold(attacks, |acc, f| acc | 1u64 << idx(t_rank, f) as u64);
 
-        attacks = (0..t_file).rev()
+        attacks = (0..t_file)
+            .rev()
             .take_while_inclusive(|&r| !block.is_occupied(idx(r, t_rank)))
             .fold(attacks, |acc, f| acc | 1u64 << idx(t_rank, f) as u64);
 
         Bitboard::from(attacks)
     }
 
-    // // Slider piece's attack tables
-    // fn init_slider_attacks(bishop: Bitboard, side: &Colour) {
-    //
-    //     for
-    // }
+    fn gen_slider_attacks(bishop: bool) -> [[Bitboard; 512]; 64] {
+        let mut slider: [[Bitboard; 512]; 64] = [[Bitboard::default(); 512]; 64];
 
+        for p in Position::iter() {
+            // Init current mask
+            let attk_mask = match bishop {
+                true => Self::mask_bishop_attacks(p, &Colour::White),
+                false => Self::mask_rook_attacks(p, &Colour::White),
+            };
+
+            // Init rel bits count
+            let rel_bits_count = attk_mask.count_bits();
+
+            let occupancy_indices = 1 << rel_bits_count;
+
+            for idx in 0..occupancy_indices {
+                if bishop {
+                    let occupancy = Bitboard::new().set_occupancy(idx, &attk_mask);
+
+                    let magic_idx = (occupancy.0 * Self::BISHOP_MAGIC_NUMBERS[p as usize])
+                        >> (64 - Self::BISHOP_RELEVANT_BITS[p as usize]);
+
+                    slider[p as usize][magic_idx as usize] =
+                        Self::fly_gen_bishop_attks(p, &occupancy);
+                } else {
+                    let occupancy = Bitboard::new().set_occupancy(idx, &attk_mask);
+
+                    let magic_idx = (occupancy.0 * Self::ROOK_MAGIC_NUMBERS[p as usize])
+                        >> (64 - Self::ROOK_RELEVANT_BITS[p as usize]);
+
+                    slider[p as usize][magic_idx as usize] =
+                        Self::fly_gen_rook_attks(p, &occupancy);
+                }
+            }
+        }
+
+        slider
+    }
 }
