@@ -1,11 +1,15 @@
-use std::{iter::Peekable, str::Chars};
+use std::{
+    iter::{Enumerate, Peekable},
+    str::Chars,
+};
 
+use super::error::{InvalidChar, ParserError};
 use crate::{
-    bitboard::Bitboard,
-    chessboard::Chessboard,
-    material_layer::MaterialLayer,
-    pieces::{Colour, Piece},
-    position::{CastlingRights, Position},
+    board::bitboard::Bitboard,
+    board::chessboard::Chessboard,
+    board::material_layer::MaterialLayer,
+    board::pieces::{Colour, Piece},
+    board::position::{CastlingRights, Position},
 };
 
 #[derive(Debug)]
@@ -19,16 +23,11 @@ pub(crate) enum Token {
     FullMove(u32),
     NextRank,
     NextRegion,
-    Err(char),
-}
-
-#[derive(Debug)]
-pub(crate) enum ParserError {
-    InvalidCharacter(char)
+    Err(usize, char),
 }
 
 #[derive(Debug, Default)]
-enum ParserRegion {
+enum Region {
     #[default]
     Boardstate,
     ActiveColour,
@@ -38,21 +37,21 @@ enum ParserRegion {
     FullMove,
 }
 
-impl ParserRegion {
+impl Region {
     pub fn advance(&mut self) {
         *self = match self {
-            ParserRegion::Boardstate => ParserRegion::ActiveColour,
-            ParserRegion::ActiveColour => ParserRegion::CastlingRights,
-            ParserRegion::CastlingRights => ParserRegion::Enpassant,
-            ParserRegion::Enpassant => ParserRegion::HalfMove,
-            ParserRegion::HalfMove => ParserRegion::FullMove,
-            ParserRegion::FullMove => ParserRegion::FullMove, // or wrap to Boardstate if cyclic
+            Region::Boardstate => Region::ActiveColour,
+            Region::ActiveColour => Region::CastlingRights,
+            Region::CastlingRights => Region::Enpassant,
+            Region::Enpassant => Region::HalfMove,
+            Region::HalfMove => Region::FullMove,
+            Region::FullMove => Region::FullMove, // or wrap to Boardstate if cyclic
         };
     }
 }
 
 // This will need to be a result
-pub(crate) fn generate_board(input: &str) -> Result<Chessboard, ParserError> {
+pub(crate) fn parse(input: &str) -> Result<Chessboard, ParserError> {
     // Init chessboard
     let mut board: Chessboard = Chessboard::new();
     board.material_layer = MaterialLayer([Bitboard::new(); 12]);
@@ -64,7 +63,7 @@ pub(crate) fn generate_board(input: &str) -> Result<Chessboard, ParserError> {
     // Increaments with each encountered NextRank token
     let mut rank: u32 = 0;
 
-    let tokens: Vec<Token> = parse(input);
+    let tokens: Vec<Token> = tokenize(input);
 
     // === Loop over tokens and configure chessboard ===
     for token in tokens {
@@ -84,21 +83,27 @@ pub(crate) fn generate_board(input: &str) -> Result<Chessboard, ParserError> {
                 file = 0;
             }
             Token::NextRegion => {}
-            Token::Err(c) => return Err(ParserError::InvalidCharacter(c))
+            Token::Err(i, c) => {
+                return Err(ParserError::InvalidCharacter(InvalidChar {
+                    input: input.to_owned(),
+                    invalid_char: c,
+                    pos: i,
+                }))
+            }
         }
     }
 
     Ok(board)
 }
 
-pub(crate) fn parse(input: &str) -> Vec<Token> {
-    let mut chars = input.chars().peekable();
-    let mut region = ParserRegion::default();
+pub(crate) fn tokenize(input: &str) -> Vec<Token> {
+    let mut chars = input.chars().enumerate().peekable();
+    let mut region = Region::default();
     let mut tokens = Vec::new();
 
-    while let Some(character) = chars.next() {
+    while let Some((i, character)) = chars.next() {
         let token = match region {
-            ParserRegion::Boardstate => match character {
+            Region::Boardstate => match character {
                 '0'..='8' => Token::EmptySquares(character.to_digit(10).unwrap_or_default()),
                 '/' => Token::NextRank,
                 ' ' => {
@@ -107,63 +112,59 @@ pub(crate) fn parse(input: &str) -> Vec<Token> {
                 }
                 _ => match Piece::try_from(&character) {
                     Ok(p) => Token::Material(p),
-                    Err(_) => Token::Err(character),
+                    Err(_) => Token::Err(i, character),
                 },
             },
 
-            ParserRegion::ActiveColour => match character {
+            Region::ActiveColour => match character {
                 'w' => Token::ActiveColour(Colour::White(())),
                 'b' => Token::ActiveColour(Colour::Red(())),
                 ' ' => {
                     region.advance();
                     Token::NextRegion
                 }
-                _ => Token::Err(character),
+                _ => Token::Err(i, character),
             },
 
-            ParserRegion::CastlingRights => match character {
+            Region::CastlingRights => match character {
                 'K' => Token::Castling(CastlingRights::WK),
                 'Q' => Token::Castling(CastlingRights::WQ),
                 'k' => Token::Castling(CastlingRights::RK),
                 'q' => Token::Castling(CastlingRights::RQ),
-                '-' => {
-                    Token::Castling(CastlingRights::None)
-                }
+                '-' => Token::Castling(CastlingRights::None),
                 ' ' => {
                     region.advance();
                     Token::NextRegion
                 }
-                _ => Token::Err(character),
+                _ => Token::Err(i, character),
             },
 
-            ParserRegion::Enpassant => match character {
-                '-' => {
-                    Token::Enpassant(None)
-                }
+            Region::Enpassant => match character {
+                '-' => Token::Enpassant(None),
                 'a'..='h' => {
                     let Some(next_char) = chars.peek().copied() else {
-                        return vec![Token::Err(character)];
+                        return vec![Token::Err(i, character)];
                     };
 
-                    if let '1'..='8' = next_char {
+                    if let '1'..='8' = next_char.1 {
                         chars.next();
-                        let pos = Position::new(character, next_char);
+                        let pos = Position::new(character, next_char.1);
                         match pos {
                             Some(p) => Token::Enpassant(Some(p)),
-                            None => Token::Err(character),
+                            None => Token::Err(i, character),
                         }
                     } else {
-                        Token::Err(character)
+                        Token::Err(i, character)
                     }
                 }
                 ' ' => {
                     region.advance();
                     Token::NextRegion
                 }
-                _ => Token::Err(character),
+                _ => Token::Err(i, character),
             },
 
-            ParserRegion::HalfMove => match character {
+            Region::HalfMove => match character {
                 '0'..='9' => {
                     let value = parse_number(character, &mut chars);
                     Token::HalfMove(value)
@@ -172,10 +173,10 @@ pub(crate) fn parse(input: &str) -> Vec<Token> {
                     region.advance();
                     Token::NextRegion
                 }
-                _ => Token::Err(character),
+                _ => Token::Err(i, character),
             },
 
-            ParserRegion::FullMove => match character {
+            Region::FullMove => match character {
                 '0'..='9' => {
                     let value = parse_number(character, &mut chars);
                     Token::FullMove(value)
@@ -184,21 +185,20 @@ pub(crate) fn parse(input: &str) -> Vec<Token> {
                     region.advance();
                     Token::NextRegion
                 }
-                _ => Token::Err(character),
+                _ => Token::Err(i, character),
             },
         };
 
-        println!("{:?} | {:?}", &region, &token);
         tokens.push(token);
     }
 
     tokens
 }
 
-fn parse_number(start: char, chars: &mut Peekable<Chars>) -> u32 {
+fn parse_number(start: char, chars: &mut Peekable<Enumerate<Chars>>) -> u32 {
     let mut num = String::new();
     num.push(start);
-    while let Some(&c) = chars.peek() {
+    while let Some(&(_, c)) = chars.peek() {
         if c.is_ascii_digit() {
             num.push(c);
             chars.next();

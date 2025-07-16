@@ -1,11 +1,9 @@
-use std::fmt;
-
-use itertools::Itertools;
+use std::{fmt, ops::{Index, IndexMut}};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 // The board positions
-#[derive(Debug, EnumIter, Clone, Copy)]
+#[derive(Debug, EnumIter, Clone, Copy, PartialEq, Eq)]
 pub enum Position {
     A8, B8, C8, D8, E8, F8, G8, H8,
     A7, B7, C7, D7, E7, F7, G7, H7,
@@ -24,6 +22,29 @@ impl From<Position> for u64 {
     }
 }
 
+// Convert Position enum to u64
+impl From<&Position> for u64 {
+    fn from(value: &Position) -> Self {
+        *value as u64
+    }
+}
+
+// === Index for better composition ===
+impl<T> Index<Position> for [T; 64] {
+    type Output = T;
+
+    fn index(&self, pos: Position) -> &Self::Output {
+        &self[pos as usize]
+    }
+}
+
+impl<T> IndexMut<Position> for [T; 64] {
+    fn index_mut(&mut self, pos: Position) -> &mut Self::Output {
+        &mut self[pos as usize]
+    }
+}
+
+// === Display ===
 impl fmt::Display for Position {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let label = match self {
@@ -99,24 +120,19 @@ impl fmt::Display for Position {
 impl Position {
     // Convert u64 to Position
     pub(crate) fn from_u64(value: u64) -> Option<Position> {
-        if value > 64 {
+        if value >= 64 {
             None
         } else {
-            // Defaults to INVALID Position if error
-            Position::iter()
-                .take_while_inclusive(|&p| (p as u64) < value)
-                .last()
+            Position::iter().find(|&p| p as u64 == value)
         }
     }
 
     // Conver u32 to Position
     pub(crate) fn from_u32(value: u32) -> Option<Position> {
-        if value > 64 {
+        if value >= 64 {
             None
         } else {
-            Position::iter()
-                .take_while_inclusive(|&p| (p as u32) < value)
-                .last()
+            Position::iter().find(|&p| p as u32 == value)
         }
     }
 

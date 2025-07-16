@@ -1,6 +1,8 @@
+use crate::board::position::Position;
 use itertools::Itertools;
-
-use crate::position::Position;
+use std::fmt;
+use std::num::Wrapping;
+use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Mul, MulAssign, ShrAssign};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Bitboard(pub u64);
@@ -12,12 +14,9 @@ impl From<u64> for Bitboard {
     }
 }
 
-use std::ops::{BitAnd, BitOr, BitOrAssign, BitXor};
-
-// Implement the BitAnd trait for Bitboard and u64
+// === Bitwise trait impls ===
 impl BitAnd<u64> for Bitboard {
     type Output = Self;
-
     fn bitand(self, rhs: u64) -> Self::Output {
         Bitboard(self.0 & rhs)
     }
@@ -25,7 +24,6 @@ impl BitAnd<u64> for Bitboard {
 
 impl BitAnd<Bitboard> for u64 {
     type Output = Bitboard;
-
     fn bitand(self, rhs: Bitboard) -> Self::Output {
         Bitboard(self & rhs.0)
     }
@@ -33,16 +31,25 @@ impl BitAnd<Bitboard> for u64 {
 
 impl BitAnd<Bitboard> for Bitboard {
     type Output = Bitboard;
-
     fn bitand(self, rhs: Bitboard) -> Self::Output {
         Bitboard(self.0 & rhs.0)
     }
 }
 
-// Impls the BitOr trait for Bitboard and u64
+impl BitAndAssign<u64> for Bitboard {
+    fn bitand_assign(&mut self, rhs: u64) {
+        self.0 &= rhs;
+    }
+}
+
+impl BitAndAssign<Bitboard> for Bitboard {
+    fn bitand_assign(&mut self, rhs: Bitboard) {
+        self.0 &= rhs.0;
+    }
+}
+
 impl BitOr<u64> for Bitboard {
     type Output = Self;
-
     fn bitor(self, rhs: u64) -> Self::Output {
         Bitboard(self.0 | rhs)
     }
@@ -50,37 +57,103 @@ impl BitOr<u64> for Bitboard {
 
 impl BitOr<Bitboard> for u64 {
     type Output = Bitboard;
-
     fn bitor(self, rhs: Bitboard) -> Self::Output {
         Bitboard(self | rhs.0)
     }
 }
 
-impl BitXor<u64> for Bitboard {
-    type Output = Self;
-
-    fn bitxor(self, rhs: u64) -> Self::Output {
-        Bitboard(self.0 ^ rhs)
+impl BitOr<Bitboard> for Bitboard {
+    type Output = Bitboard;
+    fn bitor(self, rhs: Bitboard) -> Self::Output {
+        Bitboard(self.0 | rhs.0)
     }
 }
 
-// Implement the BitOrAssign trait for Bitboard
 impl BitOrAssign<u64> for Bitboard {
     fn bitor_assign(&mut self, rhs: u64) {
         self.0 |= rhs;
     }
 }
 
-// Implement the BitOrAssign trait for Bitboard and Bitboard
 impl BitOrAssign<Bitboard> for Bitboard {
     fn bitor_assign(&mut self, rhs: Bitboard) {
         self.0 |= rhs.0;
     }
 }
 
-use std::fmt;
+impl BitXor<u64> for Bitboard {
+    type Output = Self;
+    fn bitxor(self, rhs: u64) -> Self::Output {
+        Bitboard(self.0 ^ rhs)
+    }
+}
 
-// Print a bitboard
+impl BitXor<Bitboard> for Bitboard {
+    type Output = Bitboard;
+    fn bitxor(self, rhs: Bitboard) -> Self::Output {
+        Bitboard(self.0 ^ rhs.0)
+    }
+}
+
+impl BitXorAssign<u64> for Bitboard {
+    fn bitxor_assign(&mut self, rhs: u64) {
+        self.0 ^= rhs;
+    }
+}
+
+impl BitXorAssign<Bitboard> for Bitboard {
+    fn bitxor_assign(&mut self, rhs: Bitboard) {
+        self.0 ^= rhs.0;
+    }
+}
+
+// === Multiplicative trait impls ===
+impl Mul<u64> for Bitboard {
+    type Output = Self;
+    fn mul(self, rhs: u64) -> Self::Output {
+        Bitboard(self.0 * rhs)
+    }
+}
+
+impl Mul<Bitboard> for Bitboard {
+    type Output = Bitboard;
+
+    fn mul(self, rhs: Bitboard) -> Bitboard {
+        Bitboard((Wrapping(self.0) * Wrapping(rhs.0)).0)
+    }
+}
+
+impl MulAssign<u64> for Bitboard {
+    fn mul_assign(&mut self, rhs: u64) {
+        self.0 = (Wrapping(self.0) * Wrapping(rhs)).0;
+    }
+}
+
+impl MulAssign<Bitboard> for Bitboard {
+    fn mul_assign(&mut self, rhs: Bitboard) {
+        self.0 = (Wrapping(self.0) * Wrapping(rhs.0)).0;
+    }
+}
+
+impl ShrAssign<u64> for Bitboard {
+    fn shr_assign(&mut self, rhs: u64) {
+        self.0 >>= rhs;
+    }
+}
+
+impl ShrAssign<Bitboard> for Bitboard {
+    fn shr_assign(&mut self, rhs: Bitboard) {
+        self.0 >>= rhs.0;
+    }
+}
+
+impl ShrAssign<u8> for Bitboard {
+    fn shr_assign(&mut self, rhs: u8) {
+        self.0 >>= rhs;
+    }
+}
+
+// === Display trait ===
 impl fmt::Display for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // Generate board state
@@ -192,27 +265,20 @@ impl Bitboard {
     }
 
     // Set occupancies of a bitboard
-    pub fn set_occupancy(&self, idx: u64, mask: &Bitboard) -> Self {
-        // Check if occupancy is on board
-        let check_occ = |idx: u64, count: u64| (idx & (1u64 << count)) != 0;
+    pub fn set_occupancy(&mut self, index: u64, mask: &Bitboard) {
 
-        // occupancy map
-        let bit_count = mask.count_bits();
-        let (occ, _) = (0..bit_count as u64).fold(
-            (Bitboard::new(), Bitboard::from(mask.0)),
-            |(occ, msk), count| {
-                if let Some(lsb) = msk.get_ls1b() {
-                    if check_occ(idx, count) {
-                        (occ.set_bit(lsb), msk.pop_bit(lsb))
-                    } else {
-                        (occ, msk.pop_bit(lsb))
-                    }
-                } else {
-                    (occ, msk)
-                }
-            },
-        );
+        // Collect all bit positions in mask in a consistent order
+        let mut positions: Vec<u64> = Vec::new();
+        for i in 0..64 {
+            if (mask.0 >> i) & 1 != 0 {
+                positions.push(i);
+            }
+        }
 
-        occ
+        for (i, &pos) in positions.iter().enumerate() {
+            if (index >> i) & 1 != 0 {
+                self.mutate_set_bit(pos);
+            }
+        }
     }
 }

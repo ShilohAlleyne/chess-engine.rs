@@ -1,10 +1,13 @@
+use crate::{
+    board::bitboard::Bitboard,
+    board::pieces::{Colour, Kind, Piece},
+    board::position::Position,
+};
 use core::fmt;
 use std::{
     ops::{Index, IndexMut},
     slice::Iter,
 };
-
-use crate::{bitboard::Bitboard, pieces::{Colour, Kind, Piece}, position::Position};
 
 // This struct contains the bitboards for all
 // of the pieces
@@ -37,6 +40,20 @@ impl Index<Piece> for MaterialLayer {
 impl IndexMut<Piece> for MaterialLayer {
     fn index_mut(&mut self, piece: Piece) -> &mut Self::Output {
         &mut self.0[piece.index()]
+    }
+}
+
+impl Index<Position> for MaterialLayer {
+    type Output = Bitboard;
+
+    fn index(&self, index: Position) -> &Self::Output {
+        &self.0[index as usize]
+    }
+}
+
+impl IndexMut<Position> for MaterialLayer {
+    fn index_mut(&mut self, index: Position) -> &mut Self::Output {
+        &mut self.0[index as usize]
     }
 }
 

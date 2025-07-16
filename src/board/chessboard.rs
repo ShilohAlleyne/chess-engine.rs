@@ -1,10 +1,12 @@
-use std::fmt;
-
 use crate::{
-    material_layer::MaterialLayer,
-    pieces::Colour,
-    position::{CastlingRights, Position},
+    board::{
+        material_layer::MaterialLayer,
+        pieces::Colour,
+        position::{CastlingRights, Position},
+    },
+    parsers::error::ParserError,
 };
+use std::fmt;
 
 // === The full chessboard with meta data ===
 #[derive(Debug)]
@@ -61,6 +63,11 @@ impl Chessboard {
             half_moves: 0,
             full_moves: 0,
         }
+    }
+
+    // === Chess notation parsers ===
+    pub fn try_from_fen(fen: &str) -> Result<Self, ParserError> {
+        crate::parsers::fen::parse(fen)
     }
 
     // === Castling Rights bitmask operations ===
