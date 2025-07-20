@@ -1,9 +1,17 @@
+use strum::IntoEnumIterator;
+
+use super::{
+    bitboard::Bitboard,
+    occupancy_layer::OccupancyLayer,
+    pieces::{Kind, Piece},
+};
 use crate::{
     board::{
         material_layer::MaterialLayer,
         pieces::Colour,
         position::{CastlingRights, Position},
     },
+    engine::attack_tables::AttackTables,
     parsers::error::ParserError,
 };
 use std::fmt;
@@ -12,6 +20,7 @@ use std::fmt;
 #[derive(Debug)]
 pub struct Chessboard {
     pub material_layer: MaterialLayer,
+    pub occpancy_layer: OccupancyLayer,
     pub side_to_move: Colour<()>,
     pub en_passant: Option<Position>,
     pub castling: u8,
@@ -53,10 +62,26 @@ impl fmt::Display for Chessboard {
     }
 }
 
+// === Default impl ~ generates a black material_layer instead of a normal setup ===
+impl Default for Chessboard {
+    fn default() -> Self {
+        Self {
+            material_layer: MaterialLayer([Bitboard::new(); 12]),
+            occpancy_layer: OccupancyLayer([Bitboard::new(); 2]),
+            side_to_move: Colour::White(()),
+            en_passant: None,
+            castling: 0,
+            half_moves: 0,
+            full_moves: 0,
+        }
+    }
+}
+
 impl Chessboard {
     pub fn new() -> Self {
         Self {
             material_layer: MaterialLayer::new(),
+            occpancy_layer: OccupancyLayer::new(),
             side_to_move: Colour::White(()),
             en_passant: None,
             castling: 0,
@@ -94,4 +119,49 @@ impl Chessboard {
     pub fn toggle_castling_rights(&mut self, right: CastlingRights) {
         self.castling ^= right.get_castlings_bits()
     }
+}
+
+// === Attacks ===
+pub fn is_attacked(board: &Chessboard, pos: Position, side: &Colour<()>, attk_tbls: &AttackTables) -> bool {
+    let occ = board.occpancy_layer.get_both();
+
+    [
+        board.material_layer[Piece::from_colour_kind(side, Kind::Pawn)]
+            & attk_tbls.pawn_attacks[side.opp()][pos],
+        board.material_layer[Piece::from_colour_kind(side, Kind::Knight)]
+            & attk_tbls.knight_attacks[pos],
+        board.material_layer[Piece::from_colour_kind(side, Kind::King)]
+            & attk_tbls.king_attacks[pos],
+        board.material_layer[Piece::from_colour_kind(side, Kind::Bishop)]
+            & attk_tbls.get_bishop_attacks(pos, occ),
+        board.material_layer[Piece::from_colour_kind(side, Kind::Rook)]
+            & attk_tbls.get_rook_attacks(pos, occ),
+        board.material_layer[Piece::from_colour_kind(side, Kind::Queen)]
+            & attk_tbls.get_queen_attacks(pos, occ),
+    ]
+    .iter()
+    .any(|bb| bb.0 != 0)
+}
+
+pub fn current_attacks(board: &Chessboard, side: &Colour<()>, attk_tbls: &AttackTables) -> Bitboard {
+    // return a bitboard whos occupancy is the current avaible attacks for a side
+    let mut bb: Bitboard = Bitboard::new();
+
+    for pos in Position::iter() {
+        if is_attacked(board, pos, side, attk_tbls) {
+            bb.mutate_set_bit(pos);
+        }
+    }
+
+    bb
+}
+
+pub fn get_piece_at_pos(board: &Chessboard, pos: Position) -> Option<Piece> {
+    for (i, bb) in board.material_layer.0.iter().enumerate() {
+        if bb.is_occupied(pos) {
+            return Piece::try_from(i).ok();
+        }
+    }
+
+    None
 }

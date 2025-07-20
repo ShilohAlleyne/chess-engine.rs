@@ -1,3 +1,19 @@
+// === Static function pointers ===
+type MoveGenFn = fn(
+    crate::board::bitboard::Bitboard,
+    &crate::board::chessboard::Chessboard,
+    &crate::engine::attack_tables::AttackTables,
+) -> Vec<crate::engine::movement::Action>;
+
+pub(crate) const MOVE_GENERATORS: [MoveGenFn; 1] = [
+    crate::engine::move_gen::generate_pawn_moves,
+    // generate_knight_moves,
+    // generate_bishop_moves,
+    // generate_rook_moves,
+    // generate_queen_moves,
+    // generate_king_moves,
+];
+
 // === Test positions ===
 pub const EMPTYBOARD: &str = "8/8/8/8/8/8/8/8 w - - ";
 pub const START_POSITION: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ";
@@ -16,13 +32,13 @@ pub(crate) const NOT_AB_FILE: u64 = 18229723555195321596;
 
 // ==== Occupancy Bit count ====
 // Bishop relevant occupancy bit count for every square on board
-pub const BISHOP_RELEVANT_BITS: [u8; 64] = [
+pub(crate) const BISHOP_RELEVANT_BITS: [u8; 64] = [
     6, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 7, 7, 7, 7, 5, 5, 5, 5, 7, 9, 9, 7, 5, 5,
     5, 5, 7, 9, 9, 7, 5, 5, 5, 5, 7, 7, 7, 7, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 6,
 ];
 
 // Rook relevant occupancy bit count for every square on board
-pub const ROOK_RELEVANT_BITS: [u8; 64] = [
+pub(crate) const ROOK_RELEVANT_BITS: [u8; 64] = [
     12, 11, 11, 11, 11, 11, 11, 12, 11, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 10, 10, 10, 10, 11,
     11, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 10, 10, 10, 10, 11, 11, 10, 10, 10, 10, 10, 10, 11,
     11, 10, 10, 10, 10, 10, 10, 11, 12, 11, 11, 11, 11, 11, 11, 12,

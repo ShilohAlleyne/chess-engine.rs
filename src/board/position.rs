@@ -119,7 +119,7 @@ impl fmt::Display for Position {
 
 impl Position {
     // Convert u64 to Position
-    pub(crate) fn from_u64(value: u64) -> Option<Position> {
+    pub fn from_u64(value: u64) -> Option<Position> {
         if value >= 64 {
             None
         } else {
@@ -137,10 +137,10 @@ impl Position {
     }
 
     pub(crate) fn from_coords(rank: u64, file: u64) -> Option<Self> {
-        Position::from_u64(rank * 8 + file)
+        Position::from_u64((7 - rank) * 8 + file)
     }
 
-    pub fn new(file: char, rank: char) -> Option<Self> {
+    pub fn from_chars(file: char, rank: char) -> Option<Self> {
         use Position::*;
 
         match (file, rank) {
@@ -209,6 +209,40 @@ impl Position {
             ('g', '1') => Some(G1),
             ('h', '1') => Some(H1),
             _ => None,
+        }
+    }
+
+    // Position manipluation
+    pub fn rank(&self) -> usize {
+        7 - ((*self as usize) / 8)
+    }
+
+    pub fn file(&self) -> usize {
+        (*self as usize) % 8
+    }
+
+    pub fn change_rank(&self, delta: i8) -> Option<Self> {
+        let rank = self.rank() as i8 + delta;
+        let file = self.file() as i8;
+
+        if (0..8).contains(&rank) {
+            let actual_rank = 7 - rank;
+            let index = actual_rank * 8 + file;
+            Position::from_u64(index as u64)
+        } else {
+            None
+        }
+    }
+
+    pub fn add_file(&self, delta: i8) -> Option<Self> {
+        let rank = self.rank() as i8;
+        let file = self.file() as i8 + delta;
+
+        if (0..8).contains(&file) {
+            let index = rank * 8 + file;
+            Position::from_u64(index as u64)
+        } else {
+            None
         }
     }
 }

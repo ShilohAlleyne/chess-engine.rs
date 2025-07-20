@@ -1,3 +1,7 @@
+use super::lazy_statics::{
+    BISHOP_ATTACKS, BISHOP_MASKS, KING_ATTACKS, KNIGHT_ATTACKS, PAWN_ATTACKS, ROOK_ATTACKS,
+    ROOK_MASKS,
+};
 use crate::{
     board::{bitboard::Bitboard, pieces::Colour, position::Position},
     consts::{
@@ -7,8 +11,6 @@ use crate::{
 };
 use strum::IntoEnumIterator;
 
-use super::lazy::{BISHOP_ATTACKS, BISHOP_MASKS, KING_ATTACKS, KNIGHT_ATTACKS, PAWN_ATTACKS, ROOK_ATTACKS, ROOK_MASKS};
-
 // This struct holds all our attack tables
 pub struct AttackTables {
     pub(crate) pawn_attacks: [[Bitboard; 64]; 2],
@@ -17,7 +19,6 @@ pub struct AttackTables {
     pub(crate) bishop_attacks: Box<[[Bitboard; 512]; 64]>,
     pub(crate) rook_attacks: Box<[[Bitboard; 4096]; 64]>,
 }
-
 
 impl AttackTables {
     pub fn new() -> Self {
@@ -34,9 +35,7 @@ impl AttackTables {
     // Will upgrate these with oncecell lazy eval at somepoint
     pub fn get_bishop_attacks(&self, position: Position, occ: Bitboard) -> Bitboard {
         let masked_occ = occ & BISHOP_MASKS[position];
-        let index = (masked_occ
-            .0
-            .wrapping_mul(BISHOP_MAGIC_NUMBERS[position])
+        let index = (masked_occ.0.wrapping_mul(BISHOP_MAGIC_NUMBERS[position])
             >> (64 - BISHOP_RELEVANT_BITS[position])) as usize;
 
         self.bishop_attacks[position][index]
@@ -44,9 +43,7 @@ impl AttackTables {
 
     pub fn get_rook_attacks(&self, position: Position, occ: Bitboard) -> Bitboard {
         let masked_occ = occ & ROOK_MASKS[position];
-        let index = (masked_occ
-            .0
-            .wrapping_mul(ROOK_MAGIC_NUMBERS[position])
+        let index = (masked_occ.0.wrapping_mul(ROOK_MAGIC_NUMBERS[position])
             >> (64 - ROOK_RELEVANT_BITS[position])) as usize;
 
         self.rook_attacks[position][index]
@@ -75,7 +72,7 @@ where
         .collect::<Vec<Bitboard>>()
         .try_into()
         .expect("Error generating attack table")
-}     
+}
 
 pub(crate) fn fly_gen_bishop_attks(position: impl Into<u64>, block: &Bitboard) -> Bitboard {
     let pos = position.into();
@@ -176,9 +173,7 @@ pub(crate) fn gen_rook_attacks() -> [[Bitboard; 4096]; 64] {
             let mut occupancy = Bitboard::new();
             occupancy.set_occupancy(idx, &attk_mask);
 
-            let magic_idx = (occupancy
-                .0
-                .wrapping_mul(CONSTS::ROOK_MAGIC_NUMBERS[p]))
+            let magic_idx = (occupancy.0.wrapping_mul(CONSTS::ROOK_MAGIC_NUMBERS[p]))
                 >> (64 - CONSTS::ROOK_RELEVANT_BITS[p]);
 
             // Sanity guard to avoid out-of-bounds indexing

@@ -53,8 +53,7 @@ impl Region {
 // This will need to be a result
 pub(crate) fn parse(input: &str) -> Result<Chessboard, ParserError> {
     // Init chessboard
-    let mut board: Chessboard = Chessboard::new();
-    board.material_layer = MaterialLayer([Bitboard::new(); 12]);
+    let mut board: Chessboard = Chessboard::default();
 
     // Init x & y postions
     // The file counter gets reset each encountered
@@ -90,6 +89,15 @@ pub(crate) fn parse(input: &str) -> Result<Chessboard, ParserError> {
                     pos: i,
                 }))
             }
+        }
+    }
+
+    // Set a matching occpancy_layer layer
+    for (i, bb) in board.material_layer.0.iter().enumerate() {
+        if i < 6 {
+            board.occpancy_layer.0[0] |= *bb
+        } else if i > 5 {
+            board.occpancy_layer.0[1] |= *bb
         }
     }
 
@@ -148,7 +156,7 @@ pub(crate) fn tokenize(input: &str) -> Vec<Token> {
 
                     if let '1'..='8' = next_char.1 {
                         chars.next();
-                        let pos = Position::new(character, next_char.1);
+                        let pos = Position::from_chars(character, next_char.1);
                         match pos {
                             Some(p) => Token::Enpassant(Some(p)),
                             None => Token::Err(i, character),

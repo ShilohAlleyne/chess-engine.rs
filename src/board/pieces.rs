@@ -1,14 +1,71 @@
 use colored::Colorize;
-use std::fmt;
+use std::{fmt, ops::Index};
 
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum Colour<T> {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Colour<T> {
     Red(T),
-    White(T)
+    White(T),
+}
+
+// === Index trait for easy composition ===
+// Implement Index for slices
+impl<T> Index<&Colour<()>> for [T] {
+    type Output = T;
+
+    fn index(&self, colour: &Colour<()>) -> &Self::Output {
+        match colour {
+            Colour::White(()) => &self[0],
+            Colour::Red(()) => &self[1],
+        }
+    }
+}
+
+impl<T> Index<Colour<()>> for [T] {
+    type Output = T;
+
+    fn index(&self, colour: Colour<()>) -> &Self::Output {
+        match colour {
+            Colour::White(()) => &self[0],
+            Colour::Red(()) => &self[1],
+        }
+    }
+}
+
+// Indexing Vec<T> with &Colour<()>
+impl<T> Index<&Colour<()>> for Vec<T> {
+    type Output = T;
+
+    fn index(&self, colour: &Colour<()>) -> &Self::Output {
+        match colour {
+            Colour::White(()) => &self[0],
+            Colour::Red(()) => &self[1],
+        }
+    }
+}
+
+// Implement Index for Vec<T>
+impl<T> Index<Colour<()>> for Vec<T> {
+    type Output = T;
+
+    fn index(&self, colour: Colour<()>) -> &Self::Output {
+        match colour {
+            Colour::White(()) => &self[0],
+            Colour::Red(()) => &self[1],
+        }
+    }
+}
+
+impl Colour<()> {
+    pub fn opp(&self) -> Self {
+        match self {
+            Colour::Red(()) => Colour::White(()),
+            Colour::White(()) => Colour::Red(()),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct Piece(pub(crate) Colour<Kind>);
+pub struct Piece(pub Colour<Kind>);
 
 impl fmt::Display for Piece {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -106,10 +163,17 @@ impl Piece {
             },
         }
     }
+
+    pub(crate) fn from_colour_kind(colour: &Colour<()>, kind: Kind) -> Self {
+        match colour {
+            Colour::White(_) => Piece(Colour::White(kind)),
+            Colour::Red(_) => Piece(Colour::Red(kind)),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
-pub(crate) enum Kind {
+pub enum Kind {
     Bishop,
     King,
     Knight,
