@@ -1,4 +1,4 @@
-use crate::board::{pieces::Piece, position::Position};
+use crate::board::{pieces::Piece, position::{CastlingRights, Position}};
 
 #[derive(Debug)]
 pub enum Action {
@@ -7,6 +7,7 @@ pub enum Action {
     Capture { detail: Detail, captures: Piece },
     CapturePromotion {detail: Detail, captures: Piece },
     Enpassant {detail: Detail, captures: Piece},
+    Castle(CastlingRights)
 }
 
 // Iterator impl for lazy actions

@@ -4,9 +4,9 @@ use super::{attack_tables::AttackTables, movement::Action};
 use crate::{
     board::{
         bitboard::Bitboard,
-        chessboard::{get_piece_at_pos, Chessboard},
+        chessboard::{get_piece_at_pos, is_attacked, Chessboard},
         pieces::{Colour, Kind, Piece},
-        position::Position,
+        position::{CastlingRights, Position},
     },
     engine::movement::Detail,
 };
@@ -23,12 +23,7 @@ pub fn generate_moves<'a>(
             chessboard,
             attks
         ),
-        generate_knight_moves(
-            chessboard.material_layer
-                [Piece::from_colour_kind(&chessboard.side_to_move, Kind::Knight)],
-            chessboard,
-            attks
-        )
+        generate_castle_moves(chessboard, attks),
     )
 }
 
@@ -189,14 +184,57 @@ fn generate_pawn_captures<'a>(
         })
 }
 
-// // === Castle moves ===
-// fn generate_castle_moves<'a>(
-//     board: Bitboard,
-//     chessboard: &'a Chessboard,
-//     attks: &'a AttackTables,
-// ) -> impl Iterator<Item = Action> + 'a {
-//     todo!("Generate castling moves")
-// }
+// === Castle moves ===
+fn generate_castle_moves<'a>(
+    chessboard: &'a Chessboard,
+    attks: &'a AttackTables,
+) -> impl Iterator<Item = Action> + 'a {
+    chessboard
+        .castling_rights_from_bits()
+        .into_iter()
+        .flat_map(|cr| {
+            let occ = chessboard.occpancy_layer.get_both();
+            match cr {
+                CastlingRights::WK => {
+                    if (is_attacked(chessboard, Position::E1, attks))
+                        && (!occ.is_occupied(Position::F1) && !occ.is_occupied(Position::G1))
+                    {
+                        return Some(Action::Castle(CastlingRights::WK));
+                    }
+                    None
+                }
+                CastlingRights::WQ => {
+                    if (is_attacked(chessboard, Position::E1, attks))
+                        && (!occ.is_occupied(Position::D1)
+                            && !occ.is_occupied(Position::C1)
+                            && !occ.is_occupied(Position::B1))
+                    {
+                        return Some(Action::Castle(CastlingRights::WQ));
+                    }
+                    None
+                }
+                CastlingRights::RK => {
+                    if (is_attacked(chessboard, Position::E8, attks))
+                        && (!occ.is_occupied(Position::D8) && !occ.is_occupied(Position::C8))
+                    {
+                        return Some(Action::Castle(CastlingRights::RK));
+                    }
+                    None
+                }
+                CastlingRights::RQ => {
+                    if (is_attacked(chessboard, Position::E8, attks))
+                        && (!occ.is_occupied(Position::D8)
+                            && !occ.is_occupied(Position::C8)
+                            && !occ.is_occupied(Position::B8))
+                    {
+                        return Some(Action::Castle(CastlingRights::RQ));
+                    }
+                    None
+                }
+                CastlingRights::None => None,
+            }
+        })
+}
 
 // === Knight moves ===
 fn generate_knight_moves<'a>(

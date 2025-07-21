@@ -86,7 +86,7 @@ impl fmt::Display for MaterialLayer {
         for (i, b) in self.0.iter().enumerate() {
             let piece = Piece::try_from(i).expect("Invalid board index");
 
-            for x in 0..8 {
+            (0..8).for_each(|x| {
                 for y in 0..8 {
                     let idx = x * 8 + y;
                     if let Some(pos) = Position::from_u64(idx as u64) {
@@ -95,7 +95,7 @@ impl fmt::Display for MaterialLayer {
                         }
                     }
                 }
-            }
+            });
         }
 
         // Render board

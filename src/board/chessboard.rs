@@ -122,8 +122,10 @@ impl Chessboard {
 }
 
 // === Attacks ===
-pub fn is_attacked(board: &Chessboard, pos: Position, side: &Colour<()>, attk_tbls: &AttackTables) -> bool {
+pub fn is_attacked(board: &Chessboard, pos: Position, attk_tbls: &AttackTables) -> bool {
     let occ = board.occpancy_layer.get_both();
+
+    let side = &board.side_to_move;
 
     [
         board.material_layer[Piece::from_colour_kind(side, Kind::Pawn)]
@@ -143,12 +145,12 @@ pub fn is_attacked(board: &Chessboard, pos: Position, side: &Colour<()>, attk_tb
     .any(|bb| bb.0 != 0)
 }
 
-pub fn current_attacks(board: &Chessboard, side: &Colour<()>, attk_tbls: &AttackTables) -> Bitboard {
+pub fn current_attacks(board: &Chessboard, attk_tbls: &AttackTables) -> Bitboard {
     // return a bitboard whos occupancy is the current avaible attacks for a side
     let mut bb: Bitboard = Bitboard::new();
 
     for pos in Position::iter() {
-        if is_attacked(board, pos, side, attk_tbls) {
+        if is_attacked(board, pos, attk_tbls) {
             bb.mutate_set_bit(pos);
         }
     }

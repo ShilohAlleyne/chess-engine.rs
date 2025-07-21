@@ -5,9 +5,7 @@ use std::{
 
 use super::error::{InvalidChar, ParserError};
 use crate::{
-    board::bitboard::Bitboard,
     board::chessboard::Chessboard,
-    board::material_layer::MaterialLayer,
     board::pieces::{Colour, Piece},
     board::position::{CastlingRights, Position},
 };

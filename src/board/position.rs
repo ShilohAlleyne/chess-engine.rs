@@ -248,7 +248,7 @@ impl Position {
 }
 
 // Castling bit binaary representation
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum CastlingRights {
     None,
     WK,
@@ -277,6 +277,17 @@ impl CastlingRights {
             CastlingRights::WQ => 2,
             CastlingRights::RK => 4,
             CastlingRights::RQ => 8,
+        }
+    }
+
+    // Option bool egh my eyes!
+    pub(crate) fn is_kingside(&self) -> Option<bool> {
+        match self {
+            CastlingRights::WK => Some(true),
+            CastlingRights::WQ => Some(false),
+            CastlingRights::RK => Some(true),
+            CastlingRights::RQ => Some(false),
+            CastlingRights::None => None,
         }
     }
 }
