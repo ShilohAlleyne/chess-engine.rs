@@ -1,7 +1,7 @@
 use chess::{
     board::{
-        chessboard::Chessboard,
-        pieces::{Colour, Kind, Piece},
+        chessboard::{is_attacked, Chessboard},
+        pieces::{Colour, Kind, Piece}, position::Position,
     },
     engine::{
         attack_tables::AttackTables,
@@ -14,7 +14,7 @@ fn main() -> Result<(), ParserError> {
     let attks = AttackTables::new();
 
     let board: Chessboard = Chessboard::try_from_fen(
-        "r3k2r/p1ppqpb1/bn2pnp1/3PN3/Pp2P3/2N2Q1p/1PPBBPpP/R3K2R w KQkq - 0 1",
+        "r3k2r/p1ppqp2/bn2pnp1/3PN3/Pp2P3/2b2Q1p/1PB1BPpP/R3K2R b KQkq - 0 1",
     )?;
 
     println!("{}", board);

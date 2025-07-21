@@ -189,49 +189,55 @@ fn generate_castle_moves<'a>(
     chessboard: &'a Chessboard,
     attks: &'a AttackTables,
 ) -> impl Iterator<Item = Action> + 'a {
+    let occ = chessboard.occpancy_layer.get_both();
     chessboard
         .castling_rights_from_bits()
         .into_iter()
-        .flat_map(|cr| {
-            let occ = chessboard.occpancy_layer.get_both();
+        .flat_map(move |cr| {
             match cr {
-                CastlingRights::WK => {
-                    if (is_attacked(chessboard, Position::E1, attks))
-                        && (!occ.is_occupied(Position::F1) && !occ.is_occupied(Position::G1))
+                CastlingRights::WK if chessboard.side_to_move == Colour::White(()) => {
+                    if !is_attacked(chessboard, Position::E1, attks)
+                        && !is_attacked(chessboard, Position::G1, attks)
+                        && !occ.is_occupied(Position::F1)
+                        && !occ.is_occupied(Position::G1)
                     {
                         return Some(Action::Castle(CastlingRights::WK));
                     }
                     None
                 }
-                CastlingRights::WQ => {
-                    if (is_attacked(chessboard, Position::E1, attks))
-                        && (!occ.is_occupied(Position::D1)
-                            && !occ.is_occupied(Position::C1)
-                            && !occ.is_occupied(Position::B1))
+                CastlingRights::WQ if chessboard.side_to_move == Colour::White(()) => {
+                    if !is_attacked(chessboard, Position::E1, attks)
+                        && !is_attacked(chessboard, Position::C1, attks)
+                        && !occ.is_occupied(Position::D1)
+                        && !occ.is_occupied(Position::C1)
+                        && !occ.is_occupied(Position::B1)
                     {
                         return Some(Action::Castle(CastlingRights::WQ));
                     }
                     None
                 }
-                CastlingRights::RK => {
-                    if (is_attacked(chessboard, Position::E8, attks))
-                        && (!occ.is_occupied(Position::D8) && !occ.is_occupied(Position::C8))
+                CastlingRights::RK if chessboard.side_to_move == Colour::Red(()) => {
+                    if !is_attacked(chessboard, Position::E8, attks)
+                        && !is_attacked(chessboard, Position::G8, attks)
+                        && !occ.is_occupied(Position::F8)
+                        && !occ.is_occupied(Position::G8)
                     {
                         return Some(Action::Castle(CastlingRights::RK));
                     }
                     None
                 }
-                CastlingRights::RQ => {
-                    if (is_attacked(chessboard, Position::E8, attks))
-                        && (!occ.is_occupied(Position::D8)
-                            && !occ.is_occupied(Position::C8)
-                            && !occ.is_occupied(Position::B8))
+                CastlingRights::RQ if chessboard.side_to_move == Colour::Red(()) => {
+                    if !is_attacked(chessboard, Position::E8, attks)
+                        && !is_attacked(chessboard, Position::C8, attks)
+                        && !occ.is_occupied(Position::D8)
+                        && !occ.is_occupied(Position::C8)
+                        && !occ.is_occupied(Position::B8)
                     {
                         return Some(Action::Castle(CastlingRights::RQ));
                     }
                     None
                 }
-                CastlingRights::None => None,
+                _ => None,
             }
         })
 }

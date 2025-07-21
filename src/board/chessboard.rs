@@ -124,21 +124,20 @@ impl Chessboard {
 // === Attacks ===
 pub fn is_attacked(board: &Chessboard, pos: Position, attk_tbls: &AttackTables) -> bool {
     let occ = board.occpancy_layer.get_both();
-
-    let side = &board.side_to_move;
+    let attacker = &board.side_to_move.opp(); // the side that could be attacking
 
     [
-        board.material_layer[Piece::from_colour_kind(side, Kind::Pawn)]
-            & attk_tbls.pawn_attacks[side.opp()][pos],
-        board.material_layer[Piece::from_colour_kind(side, Kind::Knight)]
+        board.material_layer[Piece::from_colour_kind(attacker, Kind::Pawn)]
+            & attk_tbls.pawn_attacks[attacker][pos], // ← correct direction
+        board.material_layer[Piece::from_colour_kind(attacker, Kind::Knight)]
             & attk_tbls.knight_attacks[pos],
-        board.material_layer[Piece::from_colour_kind(side, Kind::King)]
+        board.material_layer[Piece::from_colour_kind(attacker, Kind::King)]
             & attk_tbls.king_attacks[pos],
-        board.material_layer[Piece::from_colour_kind(side, Kind::Bishop)]
+        board.material_layer[Piece::from_colour_kind(attacker, Kind::Bishop)]
             & attk_tbls.get_bishop_attacks(pos, occ),
-        board.material_layer[Piece::from_colour_kind(side, Kind::Rook)]
+        board.material_layer[Piece::from_colour_kind(attacker, Kind::Rook)]
             & attk_tbls.get_rook_attacks(pos, occ),
-        board.material_layer[Piece::from_colour_kind(side, Kind::Queen)]
+        board.material_layer[Piece::from_colour_kind(attacker, Kind::Queen)]
             & attk_tbls.get_queen_attacks(pos, occ),
     ]
     .iter()
