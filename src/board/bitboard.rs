@@ -153,6 +153,21 @@ impl ShrAssign<u8> for Bitboard {
     }
 }
 
+// === LSB iteration ===
+impl Iterator for Bitboard {
+    type Item = Position;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.is_empty() {
+            None
+        } else {
+            let lsb = self.get_ls1b()?;
+            self.mutate_pop_bit(lsb);
+            Some(lsb)
+        }
+    }
+}
+
 // === Display trait ===
 impl fmt::Display for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

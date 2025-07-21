@@ -152,6 +152,10 @@ impl MaterialLayer {
 
         board
     }
+
+    pub fn iter(&self) -> std::slice::Iter<'_, Bitboard> {
+        self.0.iter()
+    }
 }
 
 impl Default for MaterialLayer {

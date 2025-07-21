@@ -1,19 +1,3 @@
-// === Static function pointers ===
-type MoveGenFn = fn(
-    crate::board::bitboard::Bitboard,
-    &crate::board::chessboard::Chessboard,
-    &crate::engine::attack_tables::AttackTables,
-) -> Vec<crate::engine::movement::Action>;
-
-pub(crate) const MOVE_GENERATORS: [MoveGenFn; 1] = [
-    crate::engine::move_gen::generate_pawn_moves,
-    // generate_knight_moves,
-    // generate_bishop_moves,
-    // generate_rook_moves,
-    // generate_queen_moves,
-    // generate_king_moves,
-];
-
 // === Test positions ===
 pub const EMPTYBOARD: &str = "8/8/8/8/8/8/8/8 w - - ";
 pub const START_POSITION: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ";

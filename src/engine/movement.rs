@@ -9,6 +9,16 @@ pub enum Action {
     Enpassant {detail: Detail, captures: Piece},
 }
 
+// Iterator impl for lazy actions
+impl IntoIterator for Action {
+    type Item = Action;
+    type IntoIter = std::iter::Once<Action>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        std::iter::once(self)
+    }
+}
+
 #[derive(Debug)]
 pub struct Detail {
     pub piece: Piece,
