@@ -4,7 +4,7 @@ use super::{attack_tables::AttackTables, movement::Action};
 use crate::{
     board::{
         bitboard::Bitboard,
-        chessboard::{get_piece_at_pos, is_attacked, Chessboard},
+        gamestate::{get_piece_at_pos, is_attacked, Gamestate},
         pieces::{Colour, Kind, Piece},
         position::{CastlingRights, Position},
     },
@@ -12,7 +12,7 @@ use crate::{
 };
 
 pub fn generate_moves<'a>(
-    chessboard: &'a Chessboard,
+    chessboard: &'a Gamestate,
     attks: &'a AttackTables,
 ) -> impl Iterator<Item = Action> + 'a {
     // Compose our lazy eval generated moves together
@@ -30,7 +30,7 @@ pub fn generate_moves<'a>(
 // === Indivdual piece move gen ===
 pub fn generate_pawn_moves<'a>(
     board: Bitboard,
-    chessboard: &'a Chessboard,
+    chessboard: &'a Gamestate,
     attks: &'a AttackTables,
 ) -> impl Iterator<Item = Action> + 'a {
     board.flat_map(move |source_square| {
@@ -46,7 +46,7 @@ pub fn generate_pawn_moves<'a>(
 
 fn generate_pawn_targets(
     source_square: Position,
-    chessboard: &Chessboard,
+    chessboard: &Gamestate,
 ) -> (Option<Position>, Option<Position>) {
     let (forward_one, forward_two) = match chessboard.side_to_move {
         Colour::Red(()) => (-1, -2),
@@ -71,7 +71,7 @@ fn generate_pawn_targets(
     (target_one, target_two)
 }
 
-fn generate_pawn_pushes(source_square: Position, chessboard: &Chessboard) -> Option<Action> {
+fn generate_pawn_pushes(source_square: Position, chessboard: &Gamestate) -> Option<Action> {
     let (target_one, _target_two) = generate_pawn_targets(source_square, chessboard);
 
     if let Some(tgt1) = target_one {
@@ -98,7 +98,7 @@ fn generate_pawn_pushes(source_square: Position, chessboard: &Chessboard) -> Opt
     None
 }
 
-fn generate_pawn_pushes2(source_square: Position, chessboard: &Chessboard) -> Option<Action> {
+fn generate_pawn_pushes2(source_square: Position, chessboard: &Gamestate) -> Option<Action> {
     let (_target_one, target_two) = generate_pawn_targets(source_square, chessboard);
 
     let is_red_start = source_square.rank() == 6 && chessboard.side_to_move == Colour::Red(());
@@ -119,7 +119,7 @@ fn generate_pawn_pushes2(source_square: Position, chessboard: &Chessboard) -> Op
 
 fn generate_enpassant(
     source_square: Position,
-    chessboard: &Chessboard,
+    chessboard: &Gamestate,
     attks: &AttackTables,
 ) -> Option<Action> {
     if let Some(en) = chessboard.en_passant {
@@ -145,7 +145,7 @@ fn generate_enpassant(
 
 fn generate_pawn_captures<'a>(
     source_square: Position,
-    chessboard: &'a Chessboard,
+    chessboard: &'a Gamestate,
     attks: &'a AttackTables,
 ) -> impl Iterator<Item = Action> + 'a {
     let targets = attks.pawn_attacks[chessboard.side_to_move][source_square]
@@ -186,7 +186,7 @@ fn generate_pawn_captures<'a>(
 
 // === Castle moves ===
 fn generate_castle_moves<'a>(
-    chessboard: &'a Chessboard,
+    chessboard: &'a Gamestate,
     attks: &'a AttackTables,
 ) -> impl Iterator<Item = Action> + 'a {
     let occ = chessboard.occpancy_layer.get_both();
@@ -245,7 +245,7 @@ fn generate_castle_moves<'a>(
 // === Knight moves ===
 fn generate_knight_moves<'a>(
     board: Bitboard,
-    chessboard: &'a Chessboard,
+    chessboard: &'a Gamestate,
     attks: &'a AttackTables,
 ) -> impl Iterator<Item = Action> + 'a {
     todo!("Generate knight moves using precomputed attack tables");

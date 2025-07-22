@@ -18,7 +18,7 @@ use std::fmt;
 
 // === The full chessboard with meta data ===
 #[derive(Debug)]
-pub struct Chessboard {
+pub struct Gamestate {
     pub material_layer: MaterialLayer,
     pub occpancy_layer: OccupancyLayer,
     pub side_to_move: Colour<()>,
@@ -29,7 +29,7 @@ pub struct Chessboard {
 }
 
 // === Display the full chessboard information ===
-impl fmt::Display for Chessboard {
+impl fmt::Display for Gamestate {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let side_to_move: &str = match self.side_to_move {
             Colour::White(()) => "White",
@@ -63,7 +63,7 @@ impl fmt::Display for Chessboard {
 }
 
 // === Default impl ~ generates a black material_layer instead of a normal setup ===
-impl Default for Chessboard {
+impl Default for Gamestate {
     fn default() -> Self {
         Self {
             material_layer: MaterialLayer([Bitboard::new(); 12]),
@@ -77,7 +77,7 @@ impl Default for Chessboard {
     }
 }
 
-impl Chessboard {
+impl Gamestate {
     pub fn new() -> Self {
         Self {
             material_layer: MaterialLayer::new(),
@@ -122,7 +122,7 @@ impl Chessboard {
 }
 
 // === Attacks ===
-pub fn is_attacked(board: &Chessboard, pos: Position, attk_tbls: &AttackTables) -> bool {
+pub fn is_attacked(board: &Gamestate, pos: Position, attk_tbls: &AttackTables) -> bool {
     let occ = board.occpancy_layer.get_both();
     let attacker = &board.side_to_move.opp(); // the side that could be attacking
 
@@ -144,7 +144,7 @@ pub fn is_attacked(board: &Chessboard, pos: Position, attk_tbls: &AttackTables) 
     .any(|bb| bb.0 != 0)
 }
 
-pub fn current_attacks(board: &Chessboard, attk_tbls: &AttackTables) -> Bitboard {
+pub fn current_attacks(board: &Gamestate, attk_tbls: &AttackTables) -> Bitboard {
     // return a bitboard whos occupancy is the current avaible attacks for a side
     let mut bb: Bitboard = Bitboard::new();
 
@@ -157,7 +157,7 @@ pub fn current_attacks(board: &Chessboard, attk_tbls: &AttackTables) -> Bitboard
     bb
 }
 
-pub fn get_piece_at_pos(board: &Chessboard, pos: Position) -> Option<Piece> {
+pub fn get_piece_at_pos(board: &Gamestate, pos: Position) -> Option<Piece> {
     for (i, bb) in board.material_layer.0.iter().enumerate() {
         if bb.is_occupied(pos) {
             return Piece::try_from(i).ok();

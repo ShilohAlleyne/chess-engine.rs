@@ -3,7 +3,7 @@ pub mod board {
     pub mod position;
     pub mod pieces;
     pub mod material_layer;
-    pub mod chessboard;
+    pub mod gamestate;
     pub mod occupancy_layer;
 }
 

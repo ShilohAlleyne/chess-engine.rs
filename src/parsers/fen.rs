@@ -5,7 +5,7 @@ use std::{
 
 use super::error::{InvalidChar, ParserError};
 use crate::{
-    board::chessboard::Chessboard,
+    board::gamestate::Gamestate,
     board::pieces::{Colour, Piece},
     board::position::{CastlingRights, Position},
 };
@@ -49,9 +49,9 @@ impl Region {
 }
 
 // This will need to be a result
-pub(crate) fn parse(input: &str) -> Result<Chessboard, ParserError> {
+pub(crate) fn parse(input: &str) -> Result<Gamestate, ParserError> {
     // Init chessboard
-    let mut board: Chessboard = Chessboard::default();
+    let mut board: Gamestate = Gamestate::default();
 
     // Init x & y postions
     // The file counter gets reset each encountered
