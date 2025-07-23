@@ -5,18 +5,20 @@ use std::{
 
 use super::error::{InvalidChar, ParserError};
 use crate::{
-    board::gamestate::Gamestate,
-    board::pieces::{Colour, Piece},
-    board::position::{CastlingRights, Position},
+    gamestate::boardstate as BOARDSTATE,
+    board::colour as COLOUR,
+    board::pieces as PIECE,
+    board::position as POSITION,
+    board::castling as CR,
 };
 
 #[derive(Debug)]
 pub(crate) enum Token {
-    Material(Piece),
+    Material(PIECE::Piece),
     EmptySquares(u32),
-    ActiveColour(Colour<()>),
-    Castling(CastlingRights),
-    Enpassant(Option<Position>),
+    ActiveColour(COLOUR::Colour<()>),
+    Castling(CR::CastlingRights),
+    Enpassant(Option<POSITION::Position>),
     HalfMove(u32),
     FullMove(u32),
     NextRank,
@@ -49,9 +51,9 @@ impl Region {
 }
 
 // This will need to be a result
-pub(crate) fn parse(input: &str) -> Result<Gamestate, ParserError> {
+pub(crate) fn parse(input: &str) -> Result<BOARDSTATE::State, ParserError> {
     // Init chessboard
-    let mut board: Gamestate = Gamestate::default();
+    let mut board: BOARDSTATE::State = BOARDSTATE::State::default();
 
     // Init x & y postions
     // The file counter gets reset each encountered
@@ -116,15 +118,15 @@ pub(crate) fn tokenize(input: &str) -> Vec<Token> {
                     region.advance();
                     Token::NextRegion
                 }
-                _ => match Piece::try_from(&character) {
+                _ => match PIECE::Piece::try_from(&character) {
                     Ok(p) => Token::Material(p),
                     Err(_) => Token::Err(i, character),
                 },
             },
 
             Region::ActiveColour => match character {
-                'w' => Token::ActiveColour(Colour::White(())),
-                'b' => Token::ActiveColour(Colour::Red(())),
+                'w' => Token::ActiveColour(COLOUR::Colour::White(())),
+                'b' => Token::ActiveColour(COLOUR::Colour::Red(())),
                 ' ' => {
                     region.advance();
                     Token::NextRegion
@@ -133,11 +135,11 @@ pub(crate) fn tokenize(input: &str) -> Vec<Token> {
             },
 
             Region::CastlingRights => match character {
-                'K' => Token::Castling(CastlingRights::WK),
-                'Q' => Token::Castling(CastlingRights::WQ),
-                'k' => Token::Castling(CastlingRights::RK),
-                'q' => Token::Castling(CastlingRights::RQ),
-                '-' => Token::Castling(CastlingRights::None),
+                'K' => Token::Castling(CR::CastlingRights::WK),
+                'Q' => Token::Castling(CR::CastlingRights::WQ),
+                'k' => Token::Castling(CR::CastlingRights::RK),
+                'q' => Token::Castling(CR::CastlingRights::RQ),
+                '-' => Token::Castling(CR::CastlingRights::None),
                 ' ' => {
                     region.advance();
                     Token::NextRegion
@@ -154,7 +156,7 @@ pub(crate) fn tokenize(input: &str) -> Vec<Token> {
 
                     if let '1'..='8' = next_char.1 {
                         chars.next();
-                        let pos = Position::from_chars(character, next_char.1);
+                        let pos = POSITION::Position::from_chars(character, next_char.1);
                         match pos {
                             Some(p) => Token::Enpassant(Some(p)),
                             None => Token::Err(i, character),

@@ -1,8 +1,10 @@
-use crate::board::position::Position;
+use crate::board::position as POSITION;
 use itertools::Itertools;
 use std::fmt;
 use std::num::Wrapping;
-use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Mul, MulAssign, ShrAssign};
+use std::ops::{
+    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Mul, MulAssign, ShrAssign,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Bitboard(pub u64);
@@ -155,7 +157,7 @@ impl ShrAssign<u8> for Bitboard {
 
 // === LSB iteration ===
 impl Iterator for Bitboard {
-    type Item = Position;
+    type Item = POSITION::Position;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.is_empty() {
@@ -176,7 +178,7 @@ impl fmt::Display for Bitboard {
             .map(|x| {
                 (0..8)
                     .map(|y| {
-                        if let Some(pos) = Position::from_u64(x * 8 + y) {
+                        if let Some(pos) = POSITION::Position::from_u64(x * 8 + y) {
                             if self.is_occupied(pos) {
                                 1
                             } else {
@@ -234,7 +236,7 @@ impl Bitboard {
         self.0 |= 1u64 << pos
     }
 
-    pub fn pop_bit(self, position: Position) -> Self {
+    pub fn pop_bit(self, position: POSITION::Position) -> Self {
         let pos: u64 = position.into();
         if self.is_occupied(position) {
             self ^ 1u64 << pos
@@ -245,7 +247,7 @@ impl Bitboard {
 
     // Pops a bit at a given position
     // Mutates self inplace
-    pub fn mutate_pop_bit(&mut self, position: Position) {
+    pub fn mutate_pop_bit(&mut self, position: POSITION::Position) {
         let pos = position as u64;
         if self.is_occupied(pos) {
             self.0 ^= 1u64 << pos;
@@ -271,17 +273,16 @@ impl Bitboard {
     }
 
     // Get the index of the least significant bitboard
-    pub fn get_ls1b(&self) -> Option<Position> {
+    pub fn get_ls1b(&self) -> Option<POSITION::Position> {
         if self.0 == 0 {
             None
         } else {
-            Position::from_u32(self.0.trailing_zeros())
+            POSITION::Position::from_u32(self.0.trailing_zeros())
         }
     }
 
     // Set occupancies of a bitboard
     pub fn set_occupancy(&mut self, index: u64, mask: &Bitboard) {
-
         // Collect all bit positions in mask in a consistent order
         let mut positions: Vec<u64> = Vec::new();
         for i in 0..64 {
@@ -300,4 +301,4 @@ impl Bitboard {
     pub fn is_empty(&self) -> bool {
         self.0 == 0
     }
-} 
+}

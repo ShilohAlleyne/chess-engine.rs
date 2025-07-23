@@ -1,10 +1,13 @@
 // for the first pass, I'll just use u64
-use rand::Rng;
+use super::{
+    attack_generation as ATTK_GEN,
+    attack_masks as ATTK_MSK,
+};
 use crate::{
-    board::{bitboard::Bitboard, pieces::Colour, position::Position},
+    board::{bitboard::Bitboard, colour as COLOUR, position::Position},
     consts::BIT_TABLE,
 };
-use super::{attack_masks::{mask_bishop_attacks, mask_rook_attacks}, attack_tables::{fly_gen_bishop_attks, fly_gen_rook_attks}};
+use rand::Rng;
 
 // Gen a radom number
 fn rand_u64() -> u64 {
@@ -51,9 +54,9 @@ pub fn find_magic(sq: Position, m: usize, bishop: bool) -> u64 {
     let mut a: [u64; 4096] = [0u64; 4096];
 
     let mask: u64 = if bishop {
-        mask_bishop_attacks(sq, &Colour::White(()))
+        ATTK_MSK::mask_bishop_attacks(sq, &COLOUR::Colour::White(()))
     } else {
-        mask_rook_attacks(sq, &Colour::White(()))
+        ATTK_MSK::mask_rook_attacks(sq, &COLOUR::Colour::White(()))
     }
     .0;
 
@@ -63,9 +66,9 @@ pub fn find_magic(sq: Position, m: usize, bishop: bool) -> u64 {
         let occ = Bitboard(index_u64(i, n as usize, mask));
         b[i] = occ.0;
         a[i] = if bishop {
-            fly_gen_bishop_attks(sq, &occ).0
+            ATTK_GEN::fly_gen_bishop_attks(sq, &occ).0
         } else {
-            fly_gen_rook_attks(sq, &occ).0
+            ATTK_GEN::fly_gen_rook_attks(sq, &occ).0
         };
     }
 
