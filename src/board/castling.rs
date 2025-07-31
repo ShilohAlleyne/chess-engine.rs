@@ -2,7 +2,7 @@ use std::fmt;
 
 // Castling bit binaary representation
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum CastlingRights {
+pub enum CastlingRights {
     None,
     WK,
     WQ,

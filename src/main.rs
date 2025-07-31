@@ -8,8 +8,9 @@ use chess::{
 };
 
 fn main() -> Result<(), ParserError> {
+    //C27 Vienna Game: Frankenstein-Dracula
     let board: BOARDSTATE::State = BOARDSTATE::State::try_from_fen(
-        "r3k2r/p1ppqp2/bn2pnp1/3PN3/Pp2P3/2b2Q1p/1PB1BPpP/R3K2R b KQkq - 0 1",
+        "rnbqkb1r/ppp2ppp/3p4/4p3/2B1n3/2NP4/PPP2PPP/R1BQK1NR w KQkq - 0 1",
     )?;
 
     println!("{}", board);

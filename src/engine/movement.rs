@@ -1,14 +1,25 @@
-use crate::board::{pieces as PIECE, position as POSITION, castling as CR};
+use crate::board::{castling as CR, pieces as PIECE, position as POSITION};
 
 #[derive(Debug)]
 pub enum Action {
     Push(Detail),
     Promotion(Detail),
-    Capture { detail: Detail, captures: PIECE::Piece },
-    CapturePromotion {detail: Detail, captures: PIECE::Piece },
-    Enpassant {detail: Detail, captures: PIECE::Piece},
+    Capture {
+        detail: Detail,
+        captures: PIECE::Piece,
+    },
+    CapturePromotion {
+        detail: Detail,
+        captures: PIECE::Piece,
+    },
+    Enpassant {
+        detail: Detail,
+        captures: PIECE::Piece,
+    },
     Castle(CR::CastlingRights),
-    Reposition(Detail)
+    Reposition(Detail),
+    Check(Detail),
+    CaptureWithCheck { detail: Detail, captures: PIECE::Piece }
 }
 
 // Iterator impl for lazy actions

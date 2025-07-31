@@ -9,10 +9,10 @@ pub trait StaticAttack {
     fn knight(&self, pos: POSITION::Position) -> BITBOARD::Bitboard;
     fn bishop(&self, pos: POSITION::Position, occ: BITBOARD::Bitboard) -> BITBOARD::Bitboard;
     fn rook(&self, pos: POSITION::Position, occ: BITBOARD::Bitboard) -> BITBOARD::Bitboard;
-
     fn queen(&self, pos: POSITION::Position, occ: BITBOARD::Bitboard) -> BITBOARD::Bitboard {
         self.bishop(pos, occ) | self.rook(pos, occ)
     }
+    fn king(&self, pos: POSITION::Position) -> BITBOARD::Bitboard;
 }
 
 impl<T: StaticAttack> StaticAttack for &T {
@@ -35,6 +35,10 @@ impl<T: StaticAttack> StaticAttack for &T {
     fn queen(&self, pos: POSITION::Position, occ: BITBOARD::Bitboard) -> BITBOARD::Bitboard {
         // You can delegate or reuse default:
         (*self).queen(pos, occ)
+    }
+
+    fn king(&self, pos: POSITION::Position) -> BITBOARD::Bitboard {
+        (*self).king(pos)
     }
 }
 

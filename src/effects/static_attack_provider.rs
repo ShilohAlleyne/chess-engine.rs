@@ -32,4 +32,8 @@ impl STATIC_ATTK_LOOKUP::StaticAttack for StaticAttackProvider {
 
         STATIC::ROOK_ATTACKS[pos][index]
     }
+
+    fn king(&self, pos: POSITION::Position) -> BITBOARD::Bitboard {
+        STATIC::KING_ATTACKS[pos]
+    }
 }

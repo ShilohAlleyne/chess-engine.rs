@@ -111,6 +111,15 @@ impl Piece {
     }
 }
 
+
+pub(crate) fn get_kind(piece: &Piece) -> Kind {
+    match piece.0 {
+        COLOUR::Colour::White(k) => k,
+        COLOUR::Colour::Red(k) => k,
+    }
+}
+
+
 #[derive(Debug, Clone, Copy)]
 pub enum Kind {
     Bishop,

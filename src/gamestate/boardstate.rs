@@ -1,8 +1,7 @@
 use super::{material_layer as ML, occupancy_layer as OCCUPANCY};
 use crate::{
     board::{
-        bitboard as BITBOARD, castling as CR, colour as COLOUR, pieces as PIECE,
-        position as POSITION,
+        self, bitboard as BITBOARD, castling as CR, colour as COLOUR, pieces as PIECE, position as POSITION
     },
     effects::static_attack_provider as STATIC_ATTK_LOOKUP,
     parsers::error::ParserError,
