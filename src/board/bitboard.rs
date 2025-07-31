@@ -3,7 +3,7 @@ use itertools::Itertools;
 use std::fmt;
 use std::num::Wrapping;
 use std::ops::{
-    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Mul, MulAssign, ShrAssign,
+    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Mul, MulAssign, Not, ShrAssign
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -152,6 +152,14 @@ impl ShrAssign<Bitboard> for Bitboard {
 impl ShrAssign<u8> for Bitboard {
     fn shr_assign(&mut self, rhs: u8) {
         self.0 >>= rhs;
+    }
+}
+
+impl Not for Bitboard {
+    type Output = Bitboard;
+
+    fn not(self) -> Bitboard {
+        Bitboard(!self.0)
     }
 }
 

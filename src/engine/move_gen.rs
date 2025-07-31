@@ -6,18 +6,17 @@ use crate::{
         bitboard as BITBOARD, castling as CR, colour as COLOUR, pieces as PIECES,
         position as POSITION,
     },
-    gamestate::{boardstate as BOARDSTATE, occupancy_layer as OCCUPANCY},
-    engine::lazy_statics as STATIC,
     engine::movement as MOVE,
+    gamestate::{boardstate as BOARDSTATE, occupancy_layer as OCCUPANCY},
     traits::static_lookup as PRECOMP,
 };
 
-pub fn generate_moves<'a, A>(
-    chessboard: &'a BOARDSTATE::State,
+pub fn generate_moves<A>(
+    chessboard: &BOARDSTATE::State,
     lookup: A,
-) -> impl Iterator<Item = Action> + 'a
+) -> impl Iterator<Item = Action> + '_
 where
-    A: PRECOMP::StaticAttack + Copy + 'a,
+    A: PRECOMP::StaticAttack + Copy + 'static,
 {
     // Compose our lazy eval generated moves together
     chain!(
@@ -28,24 +27,30 @@ where
             lookup,
         ),
         generate_castle_moves(chessboard, lookup),
+        generate_knight_moves(
+            chessboard.material_layer
+                [PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Knight)],
+            chessboard,
+            lookup
+        )
     )
 }
 
 // === Individual piece move gen ===
-pub fn generate_pawn_moves<'a, A>(
+pub fn generate_pawn_moves<A>(
     board: BITBOARD::Bitboard,
-    chessboard: &'a BOARDSTATE::State,
+    chessboard: &BOARDSTATE::State,
     lookup: A,
-) -> impl Iterator<Item = Action> + 'a
+) -> impl Iterator<Item = Action> + '_
 where
-    A: PRECOMP::StaticAttack + Copy + 'a,
+    A: PRECOMP::StaticAttack + Copy + 'static,
 {
     board.flat_map(move |source_square| {
         chain!(
             generate_pawn_pushes(source_square, chessboard),
             generate_pawn_pushes2(source_square, chessboard),
-            generate_pawn_captures(source_square, chessboard),
-            generate_enpassant(source_square, chessboard, lookup)
+            generate_pawn_captures(source_square, chessboard, lookup),
+            generate_enpassant(source_square, chessboard, lookup),
         )
         .flatten()
     })
@@ -154,8 +159,7 @@ fn generate_enpassant<A: PRECOMP::StaticAttack>(
     lookup: A,
 ) -> Option<Action> {
     if let Some(en) = chessboard.en_passant {
-        let en_attacks =
-            lookup.pawn(source_square, chessboard.side_to_move) & (1u64 << en as u64);
+        let en_attacks = lookup.pawn(source_square, chessboard.side_to_move) & (1u64 << en as u64);
 
         if !en_attacks.is_empty() {
             if let Some(target) = en_attacks.get_ls1b() {
@@ -180,40 +184,48 @@ fn generate_enpassant<A: PRECOMP::StaticAttack>(
     None
 }
 
-fn generate_pawn_captures(
+fn generate_pawn_captures<A>(
     source_square: POSITION::Position,
     chessboard: &BOARDSTATE::State,
-) -> impl Iterator<Item = Action> + '_ {
-    let targets = STATIC::PAWN_ATTACKS[chessboard.side_to_move][source_square]
+    lookup: A,
+) -> impl Iterator<Item = Action> + '_
+where
+    A: PRECOMP::StaticAttack + Copy,
+{
+    let targets = lookup.pawn(source_square, chessboard.side_to_move)
         & chessboard.occpancy_layer.0[chessboard.side_to_move.opp()];
 
     targets
         .into_iter()
         .filter_map(move |target| match source_square.rank() {
             6 if chessboard.side_to_move == COLOUR::Colour::White(()) => {
-                BOARDSTATE::get_piece_at_pos(chessboard, target).map(|capture| Action::CapturePromotion {
-                    detail: MOVE::Detail {
-                        piece: PIECES::Piece::from_colour_kind(
-                            &chessboard.side_to_move,
-                            PIECES::Kind::Pawn,
-                        ),
-                        source: source_square,
-                        target,
-                    },
-                    captures: capture,
+                BOARDSTATE::get_piece_at_pos(chessboard, target).map(|capture| {
+                    Action::CapturePromotion {
+                        detail: MOVE::Detail {
+                            piece: PIECES::Piece::from_colour_kind(
+                                &chessboard.side_to_move,
+                                PIECES::Kind::Pawn,
+                            ),
+                            source: source_square,
+                            target,
+                        },
+                        captures: capture,
+                    }
                 })
             }
             1 if chessboard.side_to_move == COLOUR::Colour::Red(()) => {
-                BOARDSTATE::get_piece_at_pos(chessboard, target).map(|capture| Action::CapturePromotion {
-                    detail: MOVE::Detail {
-                        piece: PIECES::Piece::from_colour_kind(
-                            &chessboard.side_to_move,
-                            PIECES::Kind::Pawn,
-                        ),
-                        source: source_square,
-                        target,
-                    },
-                    captures: capture,
+                BOARDSTATE::get_piece_at_pos(chessboard, target).map(|capture| {
+                    Action::CapturePromotion {
+                        detail: MOVE::Detail {
+                            piece: PIECES::Piece::from_colour_kind(
+                                &chessboard.side_to_move,
+                                PIECES::Kind::Pawn,
+                            ),
+                            source: source_square,
+                            target,
+                        },
+                        captures: capture,
+                    }
                 })
             }
             _ => BOARDSTATE::get_piece_at_pos(chessboard, target).map(|capture| Action::Capture {
@@ -231,69 +243,99 @@ fn generate_pawn_captures(
 }
 
 // === Castle moves ===
-pub fn generate_castle_moves<'a, A>(
-    chessboard: &'a BOARDSTATE::State,
+pub fn generate_castle_moves<A>(
+    chessboard: &BOARDSTATE::State,
     lookup: A,
-) -> impl Iterator<Item = Action> + 'a
+) -> impl Iterator<Item = Action> + '_
 where
-    A: PRECOMP::StaticAttack + Copy + 'a,
+    A: PRECOMP::StaticAttack + Copy + 'static,
 {
     let occ = OCCUPANCY::get_both(&chessboard.occpancy_layer);
-    BOARDSTATE::castling_rights_from_bits(chessboard)
-        .flat_map(move |cr| match cr {
-            CR::CastlingRights::WK if chessboard.side_to_move == COLOUR::Colour::White(()) => {
-                if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E1, lookup)
-                    && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::G1, lookup)
-                    && !occ.is_occupied(POSITION::Position::F1)
-                    && !occ.is_occupied(POSITION::Position::G1)
-                {
-                    return Some(Action::Castle(CR::CastlingRights::WK));
-                }
-                None
+    BOARDSTATE::castling_rights_from_bits(chessboard).flat_map(move |cr| match cr {
+        CR::CastlingRights::WK if chessboard.side_to_move == COLOUR::Colour::White(()) => {
+            if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E1, lookup)
+                && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::G1, lookup)
+                && !occ.is_occupied(POSITION::Position::F1)
+                && !occ.is_occupied(POSITION::Position::G1)
+            {
+                return Some(Action::Castle(CR::CastlingRights::WK));
             }
-            CR::CastlingRights::WQ if chessboard.side_to_move == COLOUR::Colour::White(()) => {
-                if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E1, lookup)
-                    && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::C1, lookup)
-                    && !occ.is_occupied(POSITION::Position::D1)
-                    && !occ.is_occupied(POSITION::Position::C1)
-                    && !occ.is_occupied(POSITION::Position::B1)
-                {
-                    return Some(Action::Castle(CR::CastlingRights::WQ));
-                }
-                None
+            None
+        }
+        CR::CastlingRights::WQ if chessboard.side_to_move == COLOUR::Colour::White(()) => {
+            if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E1, lookup)
+                && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::C1, lookup)
+                && !occ.is_occupied(POSITION::Position::D1)
+                && !occ.is_occupied(POSITION::Position::C1)
+                && !occ.is_occupied(POSITION::Position::B1)
+            {
+                return Some(Action::Castle(CR::CastlingRights::WQ));
             }
-            CR::CastlingRights::RK if chessboard.side_to_move == COLOUR::Colour::Red(()) => {
-                if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E8, lookup)
-                    && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::G8, lookup)
-                    && !occ.is_occupied(POSITION::Position::F8)
-                    && !occ.is_occupied(POSITION::Position::G8)
-                {
-                    return Some(Action::Castle(CR::CastlingRights::RK));
-                }
-                None
+            None
+        }
+        CR::CastlingRights::RK if chessboard.side_to_move == COLOUR::Colour::Red(()) => {
+            if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E8, lookup)
+                && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::G8, lookup)
+                && !occ.is_occupied(POSITION::Position::F8)
+                && !occ.is_occupied(POSITION::Position::G8)
+            {
+                return Some(Action::Castle(CR::CastlingRights::RK));
             }
-            CR::CastlingRights::RQ if chessboard.side_to_move == COLOUR::Colour::Red(()) => {
-                if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E8, lookup)
-                    && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::C8, lookup)
-                    && !occ.is_occupied(POSITION::Position::D8)
-                    && !occ.is_occupied(POSITION::Position::C8)
-                    && !occ.is_occupied(POSITION::Position::B8)
-                {
-                    return Some(Action::Castle(CR::CastlingRights::RQ));
-                }
-                None
+            None
+        }
+        CR::CastlingRights::RQ if chessboard.side_to_move == COLOUR::Colour::Red(()) => {
+            if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E8, lookup)
+                && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::C8, lookup)
+                && !occ.is_occupied(POSITION::Position::D8)
+                && !occ.is_occupied(POSITION::Position::C8)
+                && !occ.is_occupied(POSITION::Position::B8)
+            {
+                return Some(Action::Castle(CR::CastlingRights::RQ));
             }
-            _ => None,
-        })
+            None
+        }
+        _ => None,
+    })
 }
 
 // === Knight moves ===
-fn generate_knight_moves(
+fn generate_knight_moves<A>(
     board: BITBOARD::Bitboard,
     chessboard: &BOARDSTATE::State,
-) -> impl Iterator<Item = Action> + '_ {
-    todo!("Generate knight moves using precomputed attack tables");
-    std::iter::empty()
+    lookup: A,
+) -> impl Iterator<Item = Action> + '_
+where
+    A: PRECOMP::StaticAttack + 'static,
+{
+    board.into_iter().flat_map(move |source_square| {
+        // Init attacks
+        let attacks =
+            lookup.knight(source_square) & !chessboard.occpancy_layer[chessboard.side_to_move];
+
+        attacks.into_iter().map(move |trgt| {
+            if let Some(capture) = BOARDSTATE::get_piece_at_pos(chessboard, trgt) {
+                return Action::Capture {
+                    detail: MOVE::Detail {
+                        piece: PIECES::Piece::from_colour_kind(
+                            &chessboard.side_to_move,
+                            PIECES::Kind::Knight,
+                        ),
+                        source: source_square,
+                        target: trgt,
+                    },
+                    captures: capture,
+                };
+            }
+            Action::Reposition(MOVE::Detail {
+                piece: PIECES::Piece::from_colour_kind(
+                    &chessboard.side_to_move,
+                    PIECES::Kind::Knight,
+                ),
+                source: source_square,
+                target: trgt,
+            })
+        })
+    })
 }
 
 // // === Bishop moves ===

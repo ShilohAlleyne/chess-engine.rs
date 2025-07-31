@@ -7,7 +7,8 @@ pub enum Action {
     Capture { detail: Detail, captures: PIECE::Piece },
     CapturePromotion {detail: Detail, captures: PIECE::Piece },
     Enpassant {detail: Detail, captures: PIECE::Piece},
-    Castle(CR::CastlingRights)
+    Castle(CR::CastlingRights),
+    Reposition(Detail)
 }
 
 // Iterator impl for lazy actions

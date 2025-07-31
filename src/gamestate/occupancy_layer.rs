@@ -1,4 +1,7 @@
+use std::ops::Index;
+
 use crate::board::bitboard as BITBOARD;
+use crate::board::colour as COLOUR;
 
 // New type struct for occupancy
 #[derive(Debug)]
@@ -21,7 +24,23 @@ impl OccupancyLayer {
     }
 }
 
+impl Default for OccupancyLayer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub fn get_both(occ: &OccupancyLayer) -> BITBOARD::Bitboard {
     occ.0[0] | occ.0[1]
 }
 
+impl Index<COLOUR::Colour<()>> for OccupancyLayer {
+    type Output = BITBOARD::Bitboard;
+
+    fn index(&self, index: COLOUR::Colour<()>) -> &Self::Output {
+        match index {
+            COLOUR::Colour::White(()) => &self.0[0],
+            COLOUR::Colour::Red(()) => &self.0[1],
+        }
+    }
+}

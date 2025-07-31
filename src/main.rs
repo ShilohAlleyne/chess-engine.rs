@@ -13,11 +13,11 @@ fn main() -> Result<(), ParserError> {
     )?;
 
     println!("{}", board);
-    println!("{}", board.occpancy_layer.0[1]);
-    println!("{}", board.occpancy_layer.0[0]);
+    // println!("{}", board.occpancy_layer.0[1]);
+    // println!("{}", board.occpancy_layer.0[0]);
 
     let lookup = StaticAttackProvider;
-    let moves = generate_moves(&board, &lookup);
+    let moves = generate_moves(&board, lookup);
     for m in moves {
         println!("{:?}", m);
     }
