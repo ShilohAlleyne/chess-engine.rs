@@ -29,6 +29,118 @@ impl From<&Position> for u64 {
     }
 }
 
+impl TryFrom<u8> for Position {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value & 0x3F {
+            0 => Ok(Position::A8),
+            1 => Ok(Position::B8),
+            2 => Ok(Position::C8),
+            3 => Ok(Position::D8),
+            4 => Ok(Position::E8),
+            5 => Ok(Position::F8),
+            6 => Ok(Position::G8),
+            7 => Ok(Position::H8),
+
+            8 => Ok(Position::A7),
+            9 => Ok(Position::B7),
+            10 => Ok(Position::C7),
+            11 => Ok(Position::D7),
+            12 => Ok(Position::E7),
+            13 => Ok(Position::F7),
+            14 => Ok(Position::G7),
+            15 => Ok(Position::H7),
+
+            16 => Ok(Position::A6),
+            17 => Ok(Position::B6),
+            18 => Ok(Position::C6),
+            19 => Ok(Position::D6),
+            20 => Ok(Position::E6),
+            21 => Ok(Position::F6),
+            22 => Ok(Position::G6),
+            23 => Ok(Position::H6),
+
+            24 => Ok(Position::A5),
+            25 => Ok(Position::B5),
+            26 => Ok(Position::C5),
+            27 => Ok(Position::D5),
+            28 => Ok(Position::E5),
+            29 => Ok(Position::F5),
+            30 => Ok(Position::G5),
+            31 => Ok(Position::H5),
+
+            32 => Ok(Position::A4),
+            33 => Ok(Position::B4),
+            34 => Ok(Position::C4),
+            35 => Ok(Position::D4),
+            36 => Ok(Position::E4),
+            37 => Ok(Position::F4),
+            38 => Ok(Position::G4),
+            39 => Ok(Position::H4),
+
+            40 => Ok(Position::A3),
+            41 => Ok(Position::B3),
+            42 => Ok(Position::C3),
+            43 => Ok(Position::D3),
+            44 => Ok(Position::E3),
+            45 => Ok(Position::F3),
+            46 => Ok(Position::G3),
+            47 => Ok(Position::H3),
+
+            48 => Ok(Position::A2),
+            49 => Ok(Position::B2),
+            50 => Ok(Position::C2),
+            51 => Ok(Position::D2),
+            52 => Ok(Position::E2),
+            53 => Ok(Position::F2),
+            54 => Ok(Position::G2),
+            55 => Ok(Position::H2),
+
+            56 => Ok(Position::A1),
+            57 => Ok(Position::B1),
+            58 => Ok(Position::C1),
+            59 => Ok(Position::D1),
+            60 => Ok(Position::E1),
+            61 => Ok(Position::F1),
+            62 => Ok(Position::G1),
+            63 => Ok(Position::H1),
+
+            _ => Err(()),
+        }
+    }
+}
+
+impl From<Position> for u8 {
+    fn from(pos: Position) -> Self {
+        match pos {
+            Position::A8 => 0,  Position::B8 => 1,  Position::C8 => 2,  Position::D8 => 3,
+            Position::E8 => 4,  Position::F8 => 5,  Position::G8 => 6,  Position::H8 => 7,
+
+            Position::A7 => 8,  Position::B7 => 9,  Position::C7 => 10, Position::D7 => 11,
+            Position::E7 => 12, Position::F7 => 13, Position::G7 => 14, Position::H7 => 15,
+
+            Position::A6 => 16, Position::B6 => 17, Position::C6 => 18, Position::D6 => 19,
+            Position::E6 => 20, Position::F6 => 21, Position::G6 => 22, Position::H6 => 23,
+
+            Position::A5 => 24, Position::B5 => 25, Position::C5 => 26, Position::D5 => 27,
+            Position::E5 => 28, Position::F5 => 29, Position::G5 => 30, Position::H5 => 31,
+
+            Position::A4 => 32, Position::B4 => 33, Position::C4 => 34, Position::D4 => 35,
+            Position::E4 => 36, Position::F4 => 37, Position::G4 => 38, Position::H4 => 39,
+
+            Position::A3 => 40, Position::B3 => 41, Position::C3 => 42, Position::D3 => 43,
+            Position::E3 => 44, Position::F3 => 45, Position::G3 => 46, Position::H3 => 47,
+
+            Position::A2 => 48, Position::B2 => 49, Position::C2 => 50, Position::D2 => 51,
+            Position::E2 => 52, Position::F2 => 53, Position::G2 => 54, Position::H2 => 55,
+
+            Position::A1 => 56, Position::B1 => 57, Position::C1 => 58, Position::D1 => 59,
+            Position::E1 => 60, Position::F1 => 61, Position::G1 => 62, Position::H1 => 63,
+        }
+    }
+}
+
 // === Index for better composition ===
 impl<T> Index<Position> for [T; 64] {
     type Output = T;

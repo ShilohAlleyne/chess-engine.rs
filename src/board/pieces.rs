@@ -1,6 +1,7 @@
 use std::fmt;
 use colored::*;
 use crate::board::colour as COLOUR;
+use crate::engine::movement as MOVE;
 
 
 #[derive(Debug, Clone, Copy)]
@@ -81,6 +82,29 @@ impl TryFrom<usize> for Piece {
     }
 }
 
+impl From<Piece> for u8 {
+    fn from(piece: Piece) -> Self {
+        use COLOUR::Colour;
+
+        // Destructure to get the colour and kind
+        let (kind, colour_bit) = match piece.0 {
+            Colour::White(kind) => (kind, 0),
+            Colour::Red(kind) =>   (kind, 1),
+        };
+
+        let kind_id = match kind {
+            Kind::Pawn   => 1,
+            Kind::Knight => 2,
+            Kind::Bishop => 3,
+            Kind::Rook   => 4,
+            Kind::Queen  => 5,
+            Kind::King   => 6,
+        };
+
+        (colour_bit << 3) | kind_id
+    }
+}
+
 impl Piece {
     pub(crate) fn index(&self) -> usize {
         match self.0 {
@@ -109,6 +133,33 @@ impl Piece {
             COLOUR::Colour::Red(_) => Piece(COLOUR::Colour::Red(kind)),
         }
     }
+}
+
+pub fn try_from_u8(value: u8) -> Result<Option<Piece>, MOVE::MoveError> {
+    if value == 0 {
+        return Ok(None); // 0b0000 means "no piece"
+    }
+
+    let kind_id = value & 0b0111;       // bits 0ÔÇô2
+    let colour_flag = (value >> 3) & 0b1; // bit 3
+
+    let kind = match kind_id {
+        1 => Kind::Pawn,
+        2 => Kind::Knight,
+        3 => Kind::Bishop,
+        4 => Kind::Rook,
+        5 => Kind::Queen,
+        6 => Kind::King,
+        _ => return Err(MOVE::MoveError::DecodeErr("Invalid Piece encoding".to_owned())), // 0 or >6 is invalid
+    };
+
+    let colour = match colour_flag {
+        0 => COLOUR::Colour::White(kind),
+        1 => COLOUR::Colour::Red(kind),
+        _ => unreachable!(),
+    };
+
+    Ok(Some(Piece(colour)))
 }
 
 

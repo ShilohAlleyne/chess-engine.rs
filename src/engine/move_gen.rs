@@ -9,10 +9,12 @@ use crate::{
 };
 use itertools::chain;
 
+use super::movement::{Detail, MoveBuilder, MoveTrait};
+
 pub fn generate_moves<A>(
     chessboard: &BOARDSTATE::State,
     lookup: A,
-) -> impl Iterator<Item = MOVE::Action> + '_
+) -> impl Iterator<Item = MOVE::Move> + '_
 where
     A: PRECOMP::StaticAttack + Copy + 'static,
 {
@@ -68,7 +70,7 @@ pub fn generate_pawn_moves<A>(
     board: BITBOARD::Bitboard,
     chessboard: &BOARDSTATE::State,
     lookup: A,
-) -> impl Iterator<Item = MOVE::Action> + '_
+) -> impl Iterator<Item = MOVE::Move> + '_
 where
     A: PRECOMP::StaticAttack + Copy + 'static,
 {
@@ -113,39 +115,33 @@ fn generate_pawn_targets(
 fn generate_pawn_pushes(
     source_square: POSITION::Position,
     chessboard: &BOARDSTATE::State,
-) -> Option<MOVE::Action> {
+) -> Option<MOVE::Move> {
     let (target_one, _target_two) = generate_pawn_targets(source_square, chessboard);
 
     if let Some(tgt1) = target_one {
         let action = match source_square.rank() {
             6 if chessboard.side_to_move == COLOUR::Colour::White(()) => {
-                MOVE::Action::Promotion(MOVE::Detail {
-                    piece: PIECES::Piece::from_colour_kind(
-                        &chessboard.side_to_move,
-                        PIECES::Kind::Pawn,
-                    ),
-                    source: source_square,
-                    target: tgt1,
-                })
+                MOVE::MoveBuilder::new()
+                    .set_traits(&[MOVE::MoveTrait::Promotion, MOVE::MoveTrait::Quiet])
+                    .set_piece(PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Pawn))
+                    .set_source(source_square)
+                    .set_target(tgt1)
+                    .build()
             }
             1 if chessboard.side_to_move == COLOUR::Colour::Red(()) => {
-                MOVE::Action::Promotion(MOVE::Detail {
-                    piece: PIECES::Piece::from_colour_kind(
-                        &chessboard.side_to_move,
-                        PIECES::Kind::Pawn,
-                    ),
-                    source: source_square,
-                    target: tgt1,
-                })
+                MOVE::MoveBuilder::new()
+                    .set_traits(&[MOVE::MoveTrait::Promotion, MOVE::MoveTrait::Quiet])
+                    .set_piece(PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Pawn))
+                    .set_source(source_square)
+                    .set_target(tgt1)
+                    .build()
             }
-            _ => MOVE::Action::Push(MOVE::Detail {
-                piece: PIECES::Piece::from_colour_kind(
-                    &chessboard.side_to_move,
-                    PIECES::Kind::Pawn,
-                ),
-                source: source_square,
-                target: tgt1,
-            }),
+            _ => MOVE::MoveBuilder::new()
+                    .set_traits(&[MOVE::MoveTrait::Quiet])
+                    .set_piece(PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Pawn))
+                    .set_source(source_square)
+                    .set_target(tgt1)
+                    .build()
         };
         return Some(action);
     }
@@ -156,7 +152,7 @@ fn generate_pawn_pushes(
 fn generate_pawn_pushes2(
     source_square: POSITION::Position,
     chessboard: &BOARDSTATE::State,
-) -> Option<MOVE::Action> {
+) -> Option<MOVE::Move> {
     let (_target_one, target_two) = generate_pawn_targets(source_square, chessboard);
 
     let is_red_start =
@@ -166,14 +162,12 @@ fn generate_pawn_pushes2(
 
     if is_red_start || is_white_start {
         if let Some(tgt2) = target_two {
-            return Some(MOVE::Action::Push(MOVE::Detail {
-                piece: PIECES::Piece::from_colour_kind(
-                    &chessboard.side_to_move,
-                    PIECES::Kind::Pawn,
-                ),
-                source: source_square,
-                target: tgt2,
-            }));
+            return Some(MOVE::MoveBuilder::new()
+                .set_traits(&[MoveTrait::Quiet])
+                .set_piece(PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Pawn))
+                .set_source(source_square)
+                .set_target(tgt2)
+                .build());
         }
     }
 
@@ -184,26 +178,36 @@ fn generate_enpassant<A: PRECOMP::StaticAttack>(
     source_square: POSITION::Position,
     chessboard: &BOARDSTATE::State,
     lookup: A,
-) -> Option<MOVE::Action> {
+) -> Option<MOVE::Move> {
     if let Some(en) = chessboard.en_passant {
         let en_attacks = lookup.pawn(source_square, chessboard.side_to_move) & (1u64 << en as u64);
 
         if !en_attacks.is_empty() {
             if let Some(target) = en_attacks.get_ls1b() {
-                return Some(MOVE::Action::Enpassant {
-                    detail: MOVE::Detail {
-                        piece: PIECES::Piece::from_colour_kind(
-                            &chessboard.side_to_move,
-                            PIECES::Kind::Pawn,
-                        ),
-                        source: source_square,
-                        target,
-                    },
-                    captures: PIECES::Piece::from_colour_kind(
-                        &chessboard.side_to_move.opp(),
-                        PIECES::Kind::Pawn,
-                    ),
-                });
+                let detail = Detail {
+                    piece: PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Pawn),
+                    source: source_square,
+                    target,
+                };
+
+                // The mythical en_passant check!
+                if into_check(&detail, chessboard, lookup) {
+                    return Some(MOVE::MoveBuilder::new()
+                        .set_traits(&[MOVE::MoveTrait::Enpassant, MOVE::MoveTrait::Check])
+                        .set_piece(PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Pawn))
+                        .set_source(source_square)
+                        .set_target(target)
+                        .captures(PIECES::Piece::from_colour_kind(&chessboard.side_to_move.opp(), PIECES::Kind::Pawn))
+                        .build());
+                };
+
+                return Some(MOVE::MoveBuilder::new()
+                    .set_traits(&[MOVE::MoveTrait::Enpassant])
+                    .set_piece(PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Pawn))
+                    .set_source(source_square)
+                    .set_target(target)
+                    .captures(PIECES::Piece::from_colour_kind(&chessboard.side_to_move.opp(), PIECES::Kind::Pawn))
+                    .build());
             }
         }
     }
@@ -215,7 +219,7 @@ fn generate_pawn_captures<A>(
     source_square: POSITION::Position,
     chessboard: &BOARDSTATE::State,
     lookup: A,
-) -> impl Iterator<Item = MOVE::Action> + '_
+) -> impl Iterator<Item = MOVE::Move> + '_
 where
     A: PRECOMP::StaticAttack + Copy + 'static,
 {
@@ -223,42 +227,71 @@ where
         & chessboard.occpancy_layer.0[chessboard.side_to_move.opp()];
 
     targets.into_iter().filter_map(move |target| {
-        let detail = MOVE::Detail {
-            piece: PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Pawn),
-            source: source_square,
-            target,
-        };
+        let piece =  PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Pawn);
+        let checks = into_check(
+            &Detail {
+                piece,
+                source: source_square,
+                target,
+            },
+            &chessboard,
+            lookup
+        );
 
         match source_square.rank() {
             6 if chessboard.side_to_move == COLOUR::Colour::White(()) => {
-                // You can't capture promote a king, its just check
                 BOARDSTATE::get_piece_at_pos(chessboard, target).map(|capture| {
-                    MOVE::Action::CapturePromotion {
-                        detail,
-                        captures: capture,
-                    }
+                    MOVE::MoveBuilder::new()
+                        .set_traits(&[MoveTrait::Capture, MOVE::MoveTrait::Promotion])
+                        .set_piece(piece)
+                        .set_source(source_square)
+                        .set_target(target)
+                        .captures(capture)
+                        .build()
                 })
             }
             1 if chessboard.side_to_move == COLOUR::Colour::Red(()) => {
                 BOARDSTATE::get_piece_at_pos(chessboard, target).map(|capture| {
-                    // You can't capture promote a king, its just check
-                    MOVE::Action::CapturePromotion {
-                        detail,
-                        captures: capture,
-                    }
+                    MOVE::MoveBuilder::new()
+                        .set_traits(&[MoveTrait::Capture, MOVE::MoveTrait::Promotion])
+                        .set_piece(piece)
+                        .set_source(source_square)
+                        .set_target(target)
+                        .captures(capture)
+                        .build()
                 })
             }
             _ => BOARDSTATE::get_piece_at_pos(chessboard, target)
-                .map(|capture| captures(detail, capture, chessboard, lookup)),
+                .map(|capture| {
+                    if checks {
+                        return MOVE::MoveBuilder::new()
+                        .set_traits(&[MOVE::MoveTrait::Check, MOVE::MoveTrait::Capture])
+                        .set_piece(piece)
+                        .set_source(source_square)
+                        .set_target(target)
+                        .captures(capture)
+                        .build();
+                    }
+
+                    MoveBuilder::new()
+                        .set_traits(&[MOVE::MoveTrait::Capture])
+                        .set_piece(piece)
+                        .set_source(source_square)
+                        .set_target(target)
+                        .captures(capture)
+                        .build()
+
+                }),
         }
     })
 }
 
 // === Castle moves ===
+// Add castling into check
 pub fn generate_castle_moves<A>(
     chessboard: &BOARDSTATE::State,
     lookup: A,
-) -> impl Iterator<Item = MOVE::Action> + '_
+) -> impl Iterator<Item = MOVE::Move> + '_
 where
     A: PRECOMP::StaticAttack + Copy + 'static,
 {
@@ -270,7 +303,12 @@ where
                 && !occ.is_occupied(POSITION::Position::F1)
                 && !occ.is_occupied(POSITION::Position::G1)
             {
-                return Some(MOVE::Action::Castle(CR::CastlingRights::WK));
+                return Some(MOVE::MoveBuilder::new()
+                    .set_traits(&[MOVE::MoveTrait::Castle])
+                    .set_source(POSITION::Position::E1)
+                    .set_target(POSITION::Position::G1)
+                    .build()
+                );
             }
             None
         }
@@ -281,7 +319,12 @@ where
                 && !occ.is_occupied(POSITION::Position::C1)
                 && !occ.is_occupied(POSITION::Position::B1)
             {
-                return Some(MOVE::Action::Castle(CR::CastlingRights::WQ));
+                return Some(MOVE::MoveBuilder::new()
+                    .set_traits(&[MOVE::MoveTrait::Castle])
+                    .set_source(POSITION::Position::E1)
+                    .set_target(POSITION::Position::C1)
+                    .build()
+                );
             }
             None
         }
@@ -291,7 +334,12 @@ where
                 && !occ.is_occupied(POSITION::Position::F8)
                 && !occ.is_occupied(POSITION::Position::G8)
             {
-                return Some(MOVE::Action::Castle(CR::CastlingRights::RK));
+                return Some(MOVE::MoveBuilder::new()
+                    .set_traits(&[MOVE::MoveTrait::Castle])
+                    .set_source(POSITION::Position::E8)
+                    .set_target(POSITION::Position::G8)
+                    .build()
+                );            
             }
             None
         }
@@ -302,7 +350,12 @@ where
                 && !occ.is_occupied(POSITION::Position::C8)
                 && !occ.is_occupied(POSITION::Position::B8)
             {
-                return Some(MOVE::Action::Castle(CR::CastlingRights::RQ));
+                return Some(MOVE::MoveBuilder::new()
+                    .set_traits(&[MOVE::MoveTrait::Castle])
+                    .set_source(POSITION::Position::E8)
+                    .set_target(POSITION::Position::C8)
+                    .build()
+                );
             }
             None
         }
@@ -316,7 +369,7 @@ fn generate_major_piece_moves<A>(
     chessboard: &BOARDSTATE::State,
     lookup: A,
     piece: PIECES::Kind,
-) -> impl Iterator<Item = MOVE::Action> + '_
+) -> impl Iterator<Item = MOVE::Move> + '_
 where
     A: PRECOMP::StaticAttack + Copy + 'static,
 {
@@ -345,58 +398,60 @@ where
 
         attacks.into_iter().map(move |trgt| {
             if let Some(capture) = BOARDSTATE::get_piece_at_pos(chessboard, trgt) {
-                return captures(
-                    MOVE::Detail {
+                if into_check(
+                    &MOVE::Detail {
                         piece: PIECES::Piece::from_colour_kind(&chessboard.side_to_move, piece),
                         source: source_square,
                         target: trgt,
                     },
-                    capture,
                     chessboard,
                     lookup,
-                );
+                ) {
+                    return MOVE::MoveBuilder::new()
+                        .set_traits(&[MOVE::MoveTrait::Check, MOVE::MoveTrait::Capture])
+                        .set_piece(PIECES::Piece::from_colour_kind(&chessboard.side_to_move, piece))
+                        .set_source(source_square)
+                        .set_target(trgt)
+                        .captures(capture)
+                        .build();
+                };
+
+                    return MOVE::MoveBuilder::new()
+                        .set_traits(&[MOVE::MoveTrait::Capture])
+                        .set_piece(PIECES::Piece::from_colour_kind(&chessboard.side_to_move, piece))
+                        .set_source(source_square)
+                        .set_target(trgt)
+                        .captures(capture)
+                        .build();
+
             }
             // Check if we move into check or just make a quite move
-            repositions(
-                MOVE::Detail {
+            if into_check(
+                &MOVE::Detail {
                     piece: PIECES::Piece::from_colour_kind(&chessboard.side_to_move, piece),
                     source: source_square,
                     target: trgt,
                 },
                 chessboard,
-                lookup
-            )
+                lookup,
+            ) {
+                return MOVE::MoveBuilder::new()
+                    .set_traits(&[MOVE::MoveTrait::Check])
+                    .set_piece(PIECES::Piece::from_colour_kind(&chessboard.side_to_move, piece))
+                    .set_source(source_square)
+                    .set_target(trgt)
+                    .build();
+            };
+
+            MOVE::MoveBuilder::new()
+                .set_traits(&[MOVE::MoveTrait::Quiet])
+                .set_piece(PIECES::Piece::from_colour_kind(&chessboard.side_to_move, piece))
+                .set_source(source_square)
+                .set_target(trgt)
+                .build()
+
         })
     })
-}
-
-// The logic for captures and check is the same
-// but they still need to be differentated (the differentation is capture vs cature with check)
-fn captures<A>(
-    detail: MOVE::Detail,
-    captures: PIECES::Piece,
-    chessboard: &BOARDSTATE::State,
-    lookup: A,
-) -> MOVE::Action
-where
-    A: PRECOMP::StaticAttack,
-{
-    if into_check(&detail, chessboard, lookup) {
-        return MOVE::Action::CaptureWithCheck { detail, captures };
-    }
-
-    MOVE::Action::Capture { detail, captures }
-}
-
-fn repositions<A: PRECOMP::StaticAttack>(
-    detail: MOVE::Detail,
-    chessboard: &BOARDSTATE::State,
-    lookup: A,
-) -> MOVE::Action {
-    if into_check(&detail, chessboard, lookup) {
-        return MOVE::Action::Check(detail);
-    }
-    MOVE::Action::Reposition(detail)
 }
 
 fn into_check<A: PRECOMP::StaticAttack>(

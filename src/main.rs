@@ -1,10 +1,12 @@
 use chess::{
+    board::{colour::Colour, pieces::{Kind, Piece}, position::Position},
+    effects::static_attack_provider::StaticAttackProvider,
     engine::{
-        move_gen::{generate_moves, generate_pawn_moves}
+        move_gen::{generate_moves, generate_pawn_moves},
+        movement::{Move, MoveBuilder, MoveTrait},
     },
     gamestate::boardstate as BOARDSTATE,
     parsers::error::ParserError,
-    effects::static_attack_provider::StaticAttackProvider,
 };
 
 fn main() -> Result<(), ParserError> {
@@ -20,7 +22,7 @@ fn main() -> Result<(), ParserError> {
     let lookup = StaticAttackProvider;
     let moves = generate_moves(&board, lookup);
     for m in moves {
-        println!("{:?}", m);
+        print!("{}", m);
     }
 
     Ok(())
