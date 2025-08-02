@@ -5,12 +5,13 @@ use crate::board::{bitboard as BITBOARD, colour as COLOUR, position as POSITION}
 use crate::effects::{
     magic_number_provider as MAGIC_NUM_LOOKUP, relavant_bits_provider as REL_BITS_LOOKUP,
     static_mask_provider as STATIC_MASK_LOOKUP,
+    file_mask_provider as FILE_MASK_LOOKUP,
 };
 use crate::engine::{attack_generation as ATTK_GEN, attack_masks as ATTK_MSK};
 
 // Attacks
 pub(crate) static PAWN_ATTACKS: Lazy<[[BITBOARD::Bitboard; 64]; 2]> = Lazy::new(|| {
-    let lookup = ATTK_MSK::ConstFileMasks;
+    let lookup = FILE_MASK_LOOKUP::ConstFileMasks;
     [
         ATTK_GEN::gen_attacks(
             ATTK_MSK::mask_pawn_attacks,
@@ -22,7 +23,7 @@ pub(crate) static PAWN_ATTACKS: Lazy<[[BITBOARD::Bitboard; 64]; 2]> = Lazy::new(
 });
 
 pub(crate) static KNIGHT_ATTACKS: Lazy<[BITBOARD::Bitboard; 64]> = Lazy::new(|| {
-    let lookup = ATTK_MSK::ConstFileMasks;
+    let lookup = FILE_MASK_LOOKUP::ConstFileMasks;
     ATTK_GEN::gen_attacks(
         ATTK_MSK::mask_knight_attacks,
         COLOUR::Colour::White(()),
@@ -31,7 +32,7 @@ pub(crate) static KNIGHT_ATTACKS: Lazy<[BITBOARD::Bitboard; 64]> = Lazy::new(|| 
 });
 
 pub(crate) static KING_ATTACKS: Lazy<[BITBOARD::Bitboard; 64]> = Lazy::new(|| {
-    let lookup = ATTK_MSK::ConstFileMasks;
+    let lookup = FILE_MASK_LOOKUP::ConstFileMasks;
     ATTK_GEN::gen_attacks(
         ATTK_MSK::mask_king_attacks,
         COLOUR::Colour::White(()),

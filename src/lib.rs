@@ -37,6 +37,7 @@ pub mod effects {
     pub mod relavant_bits_provider;
     pub mod static_mask_provider;
     pub mod static_attack_provider;
+    pub mod file_mask_provider;
 }
 
 pub mod consts;

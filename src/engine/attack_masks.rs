@@ -1,29 +1,7 @@
 use crate::board::{bitboard as BITBOARD, colour as COLOUR, position as POSITION};
-use crate::consts as CONSTS;
 use crate::traits::const_lookup as CONST_LOOKUP;
 
 // === Attack Masks ===
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct ConstFileMasks;
-
-impl CONST_LOOKUP::ConstFileMask for ConstFileMasks {
-    fn not_a_file(&self) -> u64 {
-        CONSTS::NOT_AB_FILE
-    }
-
-    fn not_h_file(&self) -> u64 {
-        CONSTS::NOT_H_FILE
-    }
-
-    fn not_ab_file(&self) -> u64 {
-        CONSTS::NOT_AB_FILE
-    }
-
-    fn not_hg_file(&self) -> u64 {
-        CONSTS::NOT_HG_FILE
-    }
-}
-
 pub(crate) fn mask_pawn_attacks<C: CONST_LOOKUP::ConstFileMask>(
     position: POSITION::Position,
     side: &COLOUR::Colour<()>,
