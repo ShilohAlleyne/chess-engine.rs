@@ -3,11 +3,12 @@ use chess::{
     effects::static_attack_provider::StaticAttackProvider,
     engine::{
         move_gen::{generate_moves, generate_pawn_moves},
-        movement::{Move, MoveBuilder, MoveTrait},
+        movement::{traits, Move, MoveBuilder, MoveTrait},
     },
     gamestate::boardstate as BOARDSTATE,
-    parsers::error::ParserError,
+    parsers::error::ParserError, traits,
 };
+use itertools::Itertools;
 
 fn main() -> Result<(), ParserError> {
     //C27 Vienna Game: Frankenstein-Dracula
@@ -20,7 +21,8 @@ fn main() -> Result<(), ParserError> {
     // println!("{}", board.occpancy_layer.0[0]);
 
     let lookup = StaticAttackProvider;
-    let moves = generate_moves(&board, lookup);
+    let moves = generate_moves(&board, lookup)
+        .filter(|m| traits(*m).contains(&MoveTrait::Check));
     for m in moves {
         print!("{}", m);
     }

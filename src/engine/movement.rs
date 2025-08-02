@@ -179,58 +179,62 @@ impl MoveTrait {
 }
 
 // === Builder ===
-pub struct MoveBuilder (pub  u32);
+#[derive(Clone, Copy)]
+pub struct MoveBuilder(pub u32);
 
 impl MoveBuilder {
     pub fn new() -> Self {
         Self(0)
     }
 
-    pub fn set_traits(mut self, move_traits: &[MoveTrait]) -> Self {
+    pub fn set_traits(self, move_traits: &[MoveTrait]) -> Self {
+        let mut result = self;
 
         let flags: u16 = move_traits
             .iter()
             .map(|t| t.bit())
             .fold(0, |acc, b| acc | b);
-        // Clear current trait bits first
-        self.0 &= !(0xFFF << 20);
-        // Set new traits
-        self.0 |= (flags as u32) << 20;
 
-        self
+        result.0 &= !(0xFFF << 20); // Clear current trait bits
+        result.0 |= (flags as u32) << 20; // Set new traits
 
+        result
     }
 
-    pub fn set_piece(mut self, piece: PIECE::Piece) -> Self {
-        let piece_bit:u8 = piece.into();
+    pub fn set_piece(self, piece: PIECE::Piece) -> Self {
+        let mut result = self;
 
-        self.0 |= (piece_bit as u32) << 16;
+        let piece_bit: u8 = piece.into();
+        result.0 |= (piece_bit as u32) << 16;
 
-        self
+        result
     }
 
-    pub fn set_source(mut self, src: POSITION::Position) -> Self {
+    pub fn set_source(self, src: POSITION::Position) -> Self {
+        let mut result = self;
+
         let pos_bits: u8 = src.into();
+        result.0 |= (pos_bits as u32) << 10;
 
-        self.0 |= (pos_bits as u32) << 10;
-
-        self
+        result
     }
 
-    pub fn set_target(mut self, trgt: POSITION::Position) -> Self {
+    pub fn set_target(self, trgt: POSITION::Position) -> Self {
+        let mut result = self;
+
         let trgt_bits: u8 = trgt.into();
+        result.0 |= (trgt_bits as u32) << 4;
 
-        self.0 |= (trgt_bits as u32) << 4;
-
-        self
+        result
     }
 
-    pub fn captures(mut self, captures: PIECE::Piece) -> Self {
-        let cap: u8 = captures.into();
-        
-        self.0 |= cap as u32;
+    pub fn captures(self, captures: PIECE::Piece) -> Self {
+        let mut result = self;
 
-        self
+        let cap: u8 = captures.into();
+        result.0 |= cap as u32;
+
+        result
     }
 
     pub fn build(self) -> Move {
