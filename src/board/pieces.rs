@@ -126,12 +126,12 @@ impl Piece {
             },
         }
     }
+}
 
-    pub(crate) fn from_colour_kind(colour: &COLOUR::Colour<()>, kind: Kind) -> Self {
-        match colour {
-            COLOUR::Colour::White(_) => Piece(COLOUR::Colour::White(kind)),
-            COLOUR::Colour::Red(_) => Piece(COLOUR::Colour::Red(kind)),
-        }
+pub(crate) fn from_colour_kind(colour: &COLOUR::Colour<()>, kind: Kind) -> Piece {
+    match colour {
+        COLOUR::Colour::White(_) => Piece(COLOUR::Colour::White(kind)),
+        COLOUR::Colour::Red(_) => Piece(COLOUR::Colour::Red(kind)),
     }
 }
 

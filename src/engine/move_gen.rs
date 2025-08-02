@@ -20,42 +20,42 @@ where
     chain!(
         generate_pawn_moves(
             chessboard.material_layer
-                [PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Pawn)],
+                [PIECES::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Pawn)],
             chessboard,
             lookup,
         ),
         generate_castle_moves(chessboard, lookup),
         generate_major_piece_moves(
             chessboard.material_layer
-                [PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Knight)],
+                [PIECES::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Knight)],
             chessboard,
             lookup,
             PIECES::Kind::Knight,
         ),
         generate_major_piece_moves(
             chessboard.material_layer
-                [PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Rook)],
+                [PIECES::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Rook)],
             chessboard,
             lookup,
             PIECES::Kind::Rook,
         ),
         generate_major_piece_moves(
             chessboard.material_layer
-                [PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Bishop)],
+                [PIECES::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Bishop)],
             chessboard,
             lookup,
             PIECES::Kind::Bishop,
         ),
         generate_major_piece_moves(
             chessboard.material_layer
-                [PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Queen)],
+                [PIECES::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Queen)],
             chessboard,
             lookup,
             PIECES::Kind::Queen,
         ),
         generate_major_piece_moves(
             chessboard.material_layer
-                [PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::King)],
+                [PIECES::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::King)],
             chessboard,
             lookup,
             PIECES::Kind::King,
@@ -123,7 +123,7 @@ fn generate_pawn_pushes(
 
     if let Some(tgt1) = target_one {
         let mv = MOVE::MoveBuilder::new()
-            .set_piece(PIECES::Piece::from_colour_kind(
+            .set_piece(PIECES::from_colour_kind(
                 &chessboard.side_to_move,
                 PIECES::Kind::Pawn,
             ))
@@ -157,7 +157,7 @@ fn generate_pawn_pushes2(
             return Some(
                 MOVE::MoveBuilder::new()
                     .set_traits(&[MOVE::MoveTrait::Quiet])
-                    .set_piece(PIECES::Piece::from_colour_kind(
+                    .set_piece(PIECES::from_colour_kind(
                         &chessboard.side_to_move,
                         PIECES::Kind::Pawn,
                     ))
@@ -182,7 +182,7 @@ fn generate_enpassant<A: PRECOMP::StaticAttack + Copy>(
         if !en_attacks.is_empty() {
             if let Some(target) = en_attacks.get_ls1b() {
                 let detail = MOVE::Detail {
-                    piece: PIECES::Piece::from_colour_kind(
+                    piece: PIECES::from_colour_kind(
                         &chessboard.side_to_move,
                         PIECES::Kind::Pawn,
                     ),
@@ -197,13 +197,13 @@ fn generate_enpassant<A: PRECOMP::StaticAttack + Copy>(
                     } else {
                         &[MOVE::MoveTrait::Enpassant]
                     })
-                    .set_piece(PIECES::Piece::from_colour_kind(
+                    .set_piece(PIECES::from_colour_kind(
                         &chessboard.side_to_move,
                         PIECES::Kind::Pawn,
                     ))
                     .set_source(source_square)
                     .set_target(target)
-                    .captures(PIECES::Piece::from_colour_kind(
+                    .captures(PIECES::from_colour_kind(
                         &chessboard.side_to_move.opp(),
                         PIECES::Kind::Pawn,
                     ))
@@ -229,7 +229,7 @@ where
         & chessboard.occpancy_layer.0[chessboard.side_to_move.opp()];
 
     targets.into_iter().filter_map(move |target| {
-        let piece = PIECES::Piece::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Pawn);
+        let piece = PIECES::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Pawn);
         let checks = into_check(
             &MOVE::Detail {
                 piece,
@@ -364,7 +364,7 @@ where
 
         attacks.into_iter().map(move |trgt| {
             let detail = MOVE::Detail {
-                piece: PIECES::Piece::from_colour_kind(&chessboard.side_to_move, piece),
+                piece: PIECES::from_colour_kind(&chessboard.side_to_move, piece),
                 source: source_square,
                 target: trgt,
             };
@@ -376,7 +376,7 @@ where
                     } else {
                         &[MOVE::MoveTrait::Capture]
                     })
-                    .set_piece(PIECES::Piece::from_colour_kind(
+                    .set_piece(PIECES::from_colour_kind(
                         &chessboard.side_to_move,
                         piece,
                     ))
@@ -392,7 +392,7 @@ where
                 } else {
                     &[MOVE::MoveTrait::Quiet]
                 })
-                .set_piece(PIECES::Piece::from_colour_kind(
+                .set_piece(PIECES::from_colour_kind(
                     &chessboard.side_to_move,
                     piece,
                 ))
@@ -428,7 +428,7 @@ fn into_check<A: PRECOMP::StaticAttack>(
 
     // We Not here as we want to know if there IS a king attack
     let king_bb = chessboard.material_layer
-        [PIECES::Piece::from_colour_kind(&chessboard.side_to_move.opp(), PIECES::Kind::King)];
+        [PIECES::from_colour_kind(&chessboard.side_to_move.opp(), PIECES::Kind::King)];
 
     !(raw_attacks & king_bb).is_empty()
 }

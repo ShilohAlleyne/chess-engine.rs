@@ -127,17 +127,17 @@ pub fn is_attacked<A: PRECOMP::StaticAttack>(
     let attacker = board.side_to_move.opp();
 
     [
-        board.material_layer[PIECE::Piece::from_colour_kind(&attacker, PIECE::Kind::Pawn)]
+        board.material_layer[PIECE::from_colour_kind(&attacker, PIECE::Kind::Pawn)]
             & sttk_attk.pawn(pos, attacker),
-        board.material_layer[PIECE::Piece::from_colour_kind(&attacker, PIECE::Kind::Knight)]
+        board.material_layer[PIECE::from_colour_kind(&attacker, PIECE::Kind::Knight)]
             & sttk_attk.knight(pos),
-        board.material_layer[PIECE::Piece::from_colour_kind(&attacker, PIECE::Kind::King)]
+        board.material_layer[PIECE::from_colour_kind(&attacker, PIECE::Kind::King)]
             & sttk_attk.knight(pos), // ← intentional reuse? Maybe clarify if king table is separate
-        board.material_layer[PIECE::Piece::from_colour_kind(&attacker, PIECE::Kind::Bishop)]
+        board.material_layer[PIECE::from_colour_kind(&attacker, PIECE::Kind::Bishop)]
             & sttk_attk.bishop(pos, occ),
-        board.material_layer[PIECE::Piece::from_colour_kind(&attacker, PIECE::Kind::Rook)]
+        board.material_layer[PIECE::from_colour_kind(&attacker, PIECE::Kind::Rook)]
             & sttk_attk.rook(pos, occ),
-        board.material_layer[PIECE::Piece::from_colour_kind(&attacker, PIECE::Kind::Queen)]
+        board.material_layer[PIECE::from_colour_kind(&attacker, PIECE::Kind::Queen)]
             & sttk_attk.queen(pos, occ),
     ]
     .iter()
