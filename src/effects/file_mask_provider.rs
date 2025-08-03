@@ -6,7 +6,7 @@ pub(crate) struct ConstFileMasks;
 
 impl CONST_LOOKUP::ConstFileMask for ConstFileMasks {
     fn not_a_file(&self) -> u64 {
-        CONSTS::NOT_AB_FILE
+        CONSTS::NOT_A_FILE
     }
 
     fn not_h_file(&self) -> u64 {
