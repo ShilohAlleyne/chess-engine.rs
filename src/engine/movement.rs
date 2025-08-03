@@ -1,4 +1,4 @@
-use std::fmt::{self, Display};
+use std::fmt::{self};
 
 use colored::Colorize;
 use itertools::Itertools;
@@ -10,25 +10,6 @@ pub struct Detail {
     pub piece: PIECE::Piece,
     pub source: POSITION::Position,
     pub target: POSITION::Position,
-}
-
-#[derive(Debug)]
-pub enum MoveError {
-    DecodeErr(String),
-    EncodeErr(String)
-}
-
-impl std::error::Error for MoveError {}
-
-impl Display for MoveError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            MoveError::DecodeErr(s) => writeln!(f, "{}", s)?,
-            MoveError::EncodeErr(s) => writeln!(f, "{}", s)?,
-        }
-
-        Ok(())
-    }
 }
 
 

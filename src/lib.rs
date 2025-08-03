@@ -4,6 +4,7 @@ pub mod board {
     pub mod pieces;
     pub mod colour;
     pub mod castling;
+    pub mod error;
 }
 
 pub mod parsers {
@@ -13,12 +14,12 @@ pub mod parsers {
 
 pub mod engine {
     pub mod attack_generation;
-    pub mod xor_rand;
     pub mod lazy_statics;
     pub mod magic_numbers;
     pub mod attack_masks;
     pub mod move_gen;
     pub mod movement;
+    pub mod error;
 }
 
 pub mod gamestate {

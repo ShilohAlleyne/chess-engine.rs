@@ -1,8 +1,6 @@
-use std::fmt;
-use colored::*;
 use crate::board::colour as COLOUR;
-use crate::engine::movement as MOVE;
-
+use colored::*;
+use std::fmt::{self};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Piece(pub COLOUR::Colour<Kind>);
@@ -17,7 +15,7 @@ impl fmt::Display for Piece {
 }
 
 impl TryFrom<&char> for Piece {
-    type Error = ();
+    type Error = crate::board::error::Error;
 
     fn try_from(c: &char) -> Result<Self, Self::Error> {
         match *c {
@@ -33,13 +31,16 @@ impl TryFrom<&char> for Piece {
             'r' => Ok(Piece(COLOUR::Colour::Red(Kind::Rook))),
             'q' => Ok(Piece(COLOUR::Colour::Red(Kind::Queen))),
             'k' => Ok(Piece(COLOUR::Colour::Red(Kind::King))),
-            _ => Err(()),
+            _bad_char => Err(super::error::Error::Deserialization(format!(
+                "The character: {} cannot be de-serialised to type Piece.",
+                _bad_char
+            ))),
         }
     }
 }
 
 impl TryFrom<char> for Piece {
-    type Error = ();
+    type Error = crate::board::error::Error;
 
     fn try_from(c: char) -> Result<Self, Self::Error> {
         match c {
@@ -55,13 +56,16 @@ impl TryFrom<char> for Piece {
             'r' => Ok(Piece(COLOUR::Colour::Red(Kind::Rook))),
             'q' => Ok(Piece(COLOUR::Colour::Red(Kind::Queen))),
             'k' => Ok(Piece(COLOUR::Colour::Red(Kind::King))),
-            _ => Err(()),
+            _bad_char => Err(super::error::Error::Deserialization(format!(
+                "The character: {} cannot be de-serialised to type Piece.",
+                _bad_char
+            ))),
         }
     }
 }
 
 impl TryFrom<usize> for Piece {
-    type Error = ();
+    type Error = crate::board::error::Error;
 
     fn try_from(value: usize) -> Result<Self, Self::Error> {
         match value {
@@ -77,7 +81,10 @@ impl TryFrom<usize> for Piece {
             9 => Ok(Piece(COLOUR::Colour::Red(Kind::Rook))),
             10 => Ok(Piece(COLOUR::Colour::Red(Kind::Queen))),
             11 => Ok(Piece(COLOUR::Colour::Red(Kind::King))),
-            _ => Err(()),
+            _bad_num => Err(super::error::Error::TypeCoversiton(format!(
+                "The value: {}, cannot be converted to type Piece",
+                _bad_num
+            ))),
         }
     }
 }
@@ -89,16 +96,16 @@ impl From<Piece> for u8 {
         // Destructure to get the colour and kind
         let (kind, colour_bit) = match piece.0 {
             Colour::White(kind) => (kind, 0),
-            Colour::Red(kind) =>   (kind, 1),
+            Colour::Red(kind) => (kind, 1),
         };
 
         let kind_id = match kind {
-            Kind::Pawn   => 1,
+            Kind::Pawn => 1,
             Kind::Knight => 2,
             Kind::Bishop => 3,
-            Kind::Rook   => 4,
-            Kind::Queen  => 5,
-            Kind::King   => 6,
+            Kind::Rook => 4,
+            Kind::Queen => 5,
+            Kind::King => 6,
         };
 
         (colour_bit << 3) | kind_id
@@ -135,12 +142,12 @@ pub(crate) fn from_colour_kind(colour: &COLOUR::Colour<()>, kind: Kind) -> Piece
     }
 }
 
-pub fn try_from_u8(value: u8) -> Result<Option<Piece>, MOVE::MoveError> {
+pub fn try_from_u8(value: u8) -> Result<Option<Piece>, crate::engine::error::Error> {
     if value == 0 {
         return Ok(None); // 0b0000 means "no piece"
     }
 
-    let kind_id = value & 0b0111;       // bits 0ÔÇô2
+    let kind_id = value & 0b0111; // bits 0ÔÇô2
     let colour_flag = (value >> 3) & 0b1; // bit 3
 
     let kind = match kind_id {
@@ -150,7 +157,12 @@ pub fn try_from_u8(value: u8) -> Result<Option<Piece>, MOVE::MoveError> {
         4 => Kind::Rook,
         5 => Kind::Queen,
         6 => Kind::King,
-        _ => return Err(MOVE::MoveError::DecodeErr("Invalid Piece encoding".to_owned())), // 0 or >6 is invalid
+        _int => {
+            return Err(crate::engine::error::Error::Encode(format!(
+                "Invalid Piece encoding: {}",
+                _int
+            )))
+        } // 0 or >6 is invalid
     };
 
     let colour = match colour_flag {
@@ -162,14 +174,12 @@ pub fn try_from_u8(value: u8) -> Result<Option<Piece>, MOVE::MoveError> {
     Ok(Some(Piece(colour)))
 }
 
-
 pub(crate) fn get_kind(piece: &Piece) -> Kind {
     match piece.0 {
         COLOUR::Colour::White(k) => k,
         COLOUR::Colour::Red(k) => k,
     }
 }
-
 
 #[derive(Debug, Clone, Copy)]
 pub enum Kind {
