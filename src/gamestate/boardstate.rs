@@ -4,7 +4,7 @@ use crate::{
         self, bitboard as BITBOARD, castling as CR, colour as COLOUR, pieces as PIECE, position as POSITION
     },
     effects::static_attack_provider as STATIC_ATTK_LOOKUP,
-    parsers::error::ParserError,
+    parsers::error::Error,
     traits::static_lookup as PRECOMP,
 };
 use std::fmt;
@@ -84,11 +84,6 @@ impl State {
         }
     }
 
-    // === Chess notation parsers ===
-    pub fn try_from_fen(fen: &str) -> Result<Self, ParserError> {
-        crate::parsers::fen::parse(fen)
-    }
-
     // === Castling Rights bitmask operations ===
     pub fn set_castling_rights(&mut self, rights: &[CR::CastlingRights]) {
         self.castling = rights.iter().fold(0, |acc, r| acc | r.get_castlings_bits())
@@ -114,6 +109,15 @@ pub fn castling_rights_from_bits(board: &State) -> impl Iterator<Item = CR::Cast
     .iter()
     .copied()
     .filter(move |r| board.castling & r.get_castlings_bits() != 0)
+}
+
+// === Chess notation parsers ===
+pub fn try_from_fen(fen: &str) -> Result<State, Error> {
+    crate::parsers::fen::parse(fen)
+}
+
+pub fn to_fen(state: State) -> Result<String, crate::parsers::error::Error> {
+    crate::parsers::fen::serialize(state)
 }
 
 
@@ -149,7 +153,7 @@ pub fn current_attacks(board: &State) -> BITBOARD::Bitboard {
     let atk_provider = STATIC_ATTK_LOOKUP::StaticAttackProvider;
     let mut bb = BITBOARD::Bitboard::new();
 
-    for pos in POSITION::Position::iter() {
+for pos in POSITION::Position::iter() {
         if is_attacked(board, pos, atk_provider) {
             bb.mutate_set_bit(pos);
         }

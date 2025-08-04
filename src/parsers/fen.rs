@@ -3,17 +3,15 @@ use std::{
     str::Chars,
 };
 
-use super::error::{InvalidChar, ParserError};
+use itertools::Itertools;
+
 use crate::{
-    gamestate::boardstate as BOARDSTATE,
-    board::colour as COLOUR,
-    board::pieces as PIECE,
-    board::position as POSITION,
-    board::castling as CR,
+    board::castling as CR, board::colour as COLOUR, board::pieces as PIECE,
+    board::position as POSITION, gamestate::boardstate as BOARDSTATE,
 };
 
 #[derive(Debug)]
-pub(crate) enum Token {
+enum Token {
     Material(PIECE::Piece),
     EmptySquares(u32),
     ActiveColour(COLOUR::Colour<()>),
@@ -51,7 +49,7 @@ impl Region {
 }
 
 // This will need to be a result
-pub(crate) fn parse(input: &str) -> Result<BOARDSTATE::State, ParserError> {
+pub(crate) fn parse(input: &str) -> Result<BOARDSTATE::State, crate::parsers::error::Error> {
     // Init chessboard
     let mut board: BOARDSTATE::State = BOARDSTATE::State::default();
 
@@ -83,11 +81,11 @@ pub(crate) fn parse(input: &str) -> Result<BOARDSTATE::State, ParserError> {
             }
             Token::NextRegion => {}
             Token::Err(i, c) => {
-                return Err(ParserError::InvalidCharacter(InvalidChar {
+                return Err(crate::parsers::error::Error::Deserialization {
                     input: input.to_owned(),
                     invalid_char: c,
                     pos: i,
-                }))
+                })
             }
         }
     }
@@ -104,7 +102,7 @@ pub(crate) fn parse(input: &str) -> Result<BOARDSTATE::State, ParserError> {
     Ok(board)
 }
 
-pub(crate) fn tokenize(input: &str) -> Vec<Token> {
+fn tokenize(input: &str) -> Vec<Token> {
     let mut chars = input.chars().enumerate().peekable();
     let mut region = Region::default();
     let mut tokens = Vec::new();
@@ -215,4 +213,96 @@ fn parse_number(start: char, chars: &mut Peekable<Enumerate<Chars>>) -> u32 {
         }
     }
     num.parse().unwrap_or(0)
+}
+
+// serialize state to fen
+pub fn serialize(state: BOARDSTATE::State) -> Result<String, crate::parsers::error::Error> {
+    let rows = [0..8, 8..16, 16..24, 24..32, 32..40, 40..48, 48..56, 56..64];
+
+    let fen_rows = rows
+        .into_iter()
+        .map(|row| {
+            // Get piece at pos
+            row.map(|sq| -> Result<Option<PIECE::Piece>, super::error::Error> {
+                let pos = POSITION::Position::from_u32(sq as u32).ok_or_else(|| {
+                    super::error::Error::Serialization(
+                        "Invalid boardstate for serialization".to_owned(),
+                    )
+                })?;
+                Ok(BOARDSTATE::get_piece_at_pos(&state, pos))
+            })
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            // Convert peice to char and space to placeholder '1'
+            .map(|piece| match piece {
+                Some(p) => char::from(p),
+                None => '1',
+            })
+            // Fold our row chars into fen row string
+            .try_fold(
+                (String::new(), 0),
+                |(mut fen, space), c| -> Result<(String, u32), super::error::Error> {
+                    match c {
+                        '1' => Ok((fen, space + 1)),
+                        _p => {
+                            if space > 0 {
+                                let spc = char::from_u32('0' as u32 + space).ok_or_else(|| {
+                                    super::error::Error::Serialization(
+                                        "Invalid boardstate for serialization".to_owned(),
+                                    )
+                                })?;
+                                fen.push(spc);
+                            }
+                            fen.push(_p);
+                            Ok((fen, 0))
+                        }
+                    }
+                },
+            )
+            // Handle trailing spaces
+            .and_then(|(mut fen, space)| -> Result<String, super::error::Error> {
+                if space > 0 {
+                    let char = char::from_u32('0' as u32 + space).ok_or_else(|| {
+                        super::error::Error::Serialization(
+                            "Invalid boardstate for serialization".to_owned(),
+                        )
+                    })?;
+                    fen.push(char);
+                }
+
+                Ok(fen)
+            })
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let side_to_move = match state.side_to_move {
+        COLOUR::Colour::White(()) => "w",
+        COLOUR::Colour::Red(()) => "b",
+    }
+    .to_owned();
+
+    let castling = BOARDSTATE::castling_rights_from_bits(&state)
+        .map(|cr| match cr {
+            CR::CastlingRights::None => "-",
+            CR::CastlingRights::WK => "K",
+            CR::CastlingRights::WQ => "Q",
+            CR::CastlingRights::RK => "k",
+            CR::CastlingRights::RQ => "q",
+        })
+        .join("");
+
+    let enpassant = match state.en_passant {
+        Some(e) => POSITION::to_string(e),
+        None => "-".to_owned(),
+    };
+
+    Ok([
+        fen_rows.join("/"),
+        side_to_move,
+        castling,
+        enpassant,
+        format!("{}", state.half_moves),
+        format!("{}", state.full_moves),
+    ]
+    .join(" "))
 }

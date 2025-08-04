@@ -64,6 +64,25 @@ impl TryFrom<char> for Piece {
     }
 }
 
+impl From<Piece> for char {
+    fn from(piece: Piece) -> Self {
+        match piece.0 {
+            COLOUR::Colour::White(Kind::Pawn)   => 'P',
+            COLOUR::Colour::White(Kind::Knight) => 'N',
+            COLOUR::Colour::White(Kind::Bishop) => 'B',
+            COLOUR::Colour::White(Kind::Rook)   => 'R',
+            COLOUR::Colour::White(Kind::Queen)  => 'Q',
+            COLOUR::Colour::White(Kind::King)   => 'K',
+            COLOUR::Colour::Red(Kind::Pawn)     => 'p',
+            COLOUR::Colour::Red(Kind::Knight)   => 'n',
+            COLOUR::Colour::Red(Kind::Bishop)   => 'b',
+            COLOUR::Colour::Red(Kind::Rook)     => 'r',
+            COLOUR::Colour::Red(Kind::Queen)    => 'q',
+            COLOUR::Colour::Red(Kind::King)     => 'k',
+        }
+    }
+}
+
 impl TryFrom<usize> for Piece {
     type Error = crate::board::error::Error;
 

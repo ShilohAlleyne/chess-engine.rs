@@ -1,75 +1,60 @@
 use colored::*;
 use std::fmt::{self, Debug, Display};
 
-pub enum ParserError {
-    InvalidCharacter(InvalidChar),
+pub enum Error {
+    Deserialization {input: String, invalid_char: char, pos: usize},
+    Serialization(String)
 }
 
-impl std::error::Error for ParserError {}
+impl std::error::Error for Error {}
 
-pub struct InvalidChar {
-    pub input: String,
-    pub invalid_char: char,
-    pub pos: usize,
-}
-
-impl std::error::Error for InvalidChar {}
 
 // === Debug overriding ===
-impl Debug for ParserError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        Display::fmt(self, f)
-    }
-}
-
-impl Debug for InvalidChar {
+impl Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         Display::fmt(self, f)
     }
 }
 
 // === Display Error messages ====
-impl Display for ParserError {
+impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::InvalidCharacter(i) => write!(f, "{}", i),
+            Self::Deserialization{input, invalid_char, pos} => {
+                let (left, right): (String, String) = extract_regions(&input, *pos);
+
+                // Calculate offset based on the left-hand region only
+                let offset: usize = "\t".len()                                 // Tab indent
+                    + (pos.saturating_sub(left.len())).to_string().len()  // Starting index width
+                    + "-->".len()                                              // Arrow
+                    + "...".len()                                              // Ellipsis
+                    + left.len() -1;                                           // Characters on the left
+
+                let error_string = format!(
+                    "\t{}{}...{}{}{}...{}{}",
+                    (pos.saturating_sub(left.len())).to_string().blue(),
+                    "-->".blue(),
+                    left,
+                    invalid_char.to_string().red(),
+                    right,
+                    "<--".blue(),
+                    (pos + right.len()).to_string().blue()
+                );
+
+                writeln!(f, "{}:\n", "Error parsing FEN string".red())?;
+                writeln!(f, "{}", error_string)?;
+                writeln!(f, "\t{}{}", " ".repeat(offset), "^".red())?;
+                writeln!(
+                    f,
+                    "\tInvalid character ({}) at position {}",
+                    invalid_char,
+                    pos
+                )?;
+
+                Ok(())
+            },
+            Self::Serialization(msg) => writeln!(f, "{}", msg),
         }
-    }
-}
-
-impl Display for InvalidChar {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let (left, right): (String, String) = extract_regions(&self.input, self.pos);
-
-        // Calculate offset based on the left-hand region only
-        let offset: usize = "\t".len()                                 // Tab indent
-            + (self.pos.saturating_sub(left.len())).to_string().len()  // Starting index width
-            + "-->".len()                                              // Arrow
-            + "...".len()                                              // Ellipsis
-            + left.len() -1;                                           // Characters on the left
-
-        let error_string = format!(
-            "\t{}{}...{}{}{}...{}{}",
-            (self.pos.saturating_sub(left.len())).to_string().blue(),
-            "-->".blue(),
-            left,
-            self.invalid_char.to_string().red(),
-            right,
-            "<--".blue(),
-            (self.pos + right.len()).to_string().blue()
-        );
-
-        writeln!(f, "{}:\n", "Error parsing FEN string".red())?;
-        writeln!(f, "{}", error_string)?;
-        writeln!(f, "\t{}{}", " ".repeat(offset), "^".red())?;
-        writeln!(
-            f,
-            "\tInvalid character ({}) at position {}",
-            self.invalid_char,
-            self.pos
-        )?;
-
-        Ok(())
     }
 }
 
