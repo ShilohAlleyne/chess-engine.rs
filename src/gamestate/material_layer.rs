@@ -150,26 +150,26 @@ impl MaterialLayer {
             }
         }
 
-        board[PIECE::Piece(COLOUR::Colour::Red(PIECE::Kind::Rook))]
+        board[PIECE::Piece(COLOUR::Colour::Black(PIECE::Kind::Rook))]
             .mutate_set_bit(POSITION::Position::A8);
-        board[PIECE::Piece(COLOUR::Colour::Red(PIECE::Kind::Knight))]
+        board[PIECE::Piece(COLOUR::Colour::Black(PIECE::Kind::Knight))]
             .mutate_set_bit(POSITION::Position::B8);
-        board[PIECE::Piece(COLOUR::Colour::Red(PIECE::Kind::Bishop))]
+        board[PIECE::Piece(COLOUR::Colour::Black(PIECE::Kind::Bishop))]
             .mutate_set_bit(POSITION::Position::C8);
-        board[PIECE::Piece(COLOUR::Colour::Red(PIECE::Kind::Queen))]
+        board[PIECE::Piece(COLOUR::Colour::Black(PIECE::Kind::Queen))]
             .mutate_set_bit(POSITION::Position::D8);
-        board[PIECE::Piece(COLOUR::Colour::Red(PIECE::Kind::King))]
+        board[PIECE::Piece(COLOUR::Colour::Black(PIECE::Kind::King))]
             .mutate_set_bit(POSITION::Position::E8);
-        board[PIECE::Piece(COLOUR::Colour::Red(PIECE::Kind::Bishop))]
+        board[PIECE::Piece(COLOUR::Colour::Black(PIECE::Kind::Bishop))]
             .mutate_set_bit(POSITION::Position::F8);
-        board[PIECE::Piece(COLOUR::Colour::Red(PIECE::Kind::Knight))]
+        board[PIECE::Piece(COLOUR::Colour::Black(PIECE::Kind::Knight))]
             .mutate_set_bit(POSITION::Position::G8);
-        board[PIECE::Piece(COLOUR::Colour::Red(PIECE::Kind::Rook))]
+        board[PIECE::Piece(COLOUR::Colour::Black(PIECE::Kind::Rook))]
             .mutate_set_bit(POSITION::Position::H8);
 
         for file in 0..8 {
             if let Some(pos) = POSITION::Position::from_u64(file + 8) {
-                board[PIECE::Piece(COLOUR::Colour::Red(PIECE::Kind::Pawn))].mutate_set_bit(pos);
+                board[PIECE::Piece(COLOUR::Colour::Black(PIECE::Kind::Pawn))].mutate_set_bit(pos);
             }
         }
 

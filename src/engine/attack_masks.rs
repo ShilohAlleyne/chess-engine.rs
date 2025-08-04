@@ -19,7 +19,7 @@ pub(crate) fn mask_pawn_attacks<C: CONST_LOOKUP::ConstFileMask>(
                 attacks |= bitboard.0 >> 9;
             }
         }
-        COLOUR::Colour::Red(()) => {
+        COLOUR::Colour::Black(()) => {
             if (bitboard.0 << 7) & lookup.not_h_file() != 0 {
                 attacks |= bitboard.0 << 7;
             }

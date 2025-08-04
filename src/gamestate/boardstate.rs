@@ -28,7 +28,7 @@ impl fmt::Display for State {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let side_to_move: &str = match self.side_to_move {
             COLOUR::Colour::White(()) => "White",
-            COLOUR::Colour::Red(()) => "Red",
+            COLOUR::Colour::Black(()) => "Black",
         };
 
         writeln!(f, "{}", self.material_layer)?;

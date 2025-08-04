@@ -124,7 +124,7 @@ fn tokenize(input: &str) -> Vec<Token> {
 
             Region::ActiveColour => match character {
                 'w' => Token::ActiveColour(COLOUR::Colour::White(())),
-                'b' => Token::ActiveColour(COLOUR::Colour::Red(())),
+                'b' => Token::ActiveColour(COLOUR::Colour::Black(())),
                 ' ' => {
                     region.advance();
                     Token::NextRegion
@@ -277,7 +277,7 @@ pub fn serialize(state: BOARDSTATE::State) -> Result<String, crate::parsers::err
 
     let side_to_move = match state.side_to_move {
         COLOUR::Colour::White(()) => "w",
-        COLOUR::Colour::Red(()) => "b",
+        COLOUR::Colour::Black(()) => "b",
     }
     .to_owned();
 

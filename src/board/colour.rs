@@ -2,8 +2,8 @@ use std::ops::Index;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Colour<T> {
-    Red(T),
     White(T),
+    Black(T),
 }
 
 // === Index trait for easy composition ===
@@ -14,7 +14,7 @@ impl<T> Index<&Colour<()>> for [T] {
     fn index(&self, colour: &Colour<()>) -> &Self::Output {
         match colour {
             Colour::White(()) => &self[0],
-            Colour::Red(()) => &self[1],
+            Colour::Black(()) => &self[1],
         }
     }
 }
@@ -25,7 +25,7 @@ impl<T> Index<Colour<()>> for [T] {
     fn index(&self, colour: Colour<()>) -> &Self::Output {
         match colour {
             Colour::White(()) => &self[0],
-            Colour::Red(()) => &self[1],
+            Colour::Black(()) => &self[1],
         }
     }
 }
@@ -37,7 +37,7 @@ impl<T> Index<&Colour<()>> for Vec<T> {
     fn index(&self, colour: &Colour<()>) -> &Self::Output {
         match colour {
             Colour::White(()) => &self[0],
-            Colour::Red(()) => &self[1],
+            Colour::Black(()) => &self[1],
         }
     }
 }
@@ -49,7 +49,7 @@ impl<T> Index<Colour<()>> for Vec<T> {
     fn index(&self, colour: Colour<()>) -> &Self::Output {
         match colour {
             Colour::White(()) => &self[0],
-            Colour::Red(()) => &self[1],
+            Colour::Black(()) => &self[1],
         }
     }
 }
@@ -57,8 +57,8 @@ impl<T> Index<Colour<()>> for Vec<T> {
 impl Colour<()> {
     pub fn opp(&self) -> Self {
         match self {
-            Colour::Red(()) => Colour::White(()),
-            Colour::White(()) => Colour::Red(()),
+            Colour::Black(()) => Colour::White(()),
+            Colour::White(()) => Colour::Black(()),
         }
     }
 }

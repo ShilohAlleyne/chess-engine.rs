@@ -40,7 +40,7 @@ impl Index<COLOUR::Colour<()>> for OccupancyLayer {
     fn index(&self, index: COLOUR::Colour<()>) -> &Self::Output {
         match index {
             COLOUR::Colour::White(()) => &self.0[0],
-            COLOUR::Colour::Red(()) => &self.0[1],
+            COLOUR::Colour::Black(()) => &self.0[1],
         }
     }
 }

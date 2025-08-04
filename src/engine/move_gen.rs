@@ -88,7 +88,7 @@ fn generate_pawn_targets(
     chessboard: &BOARDSTATE::State,
 ) -> (Option<POSITION::Position>, Option<POSITION::Position>) {
     let (forward_one, forward_two) = match chessboard.side_to_move {
-        COLOUR::Colour::Red(()) => (-1, -2),
+        COLOUR::Colour::Black(()) => (-1, -2),
         COLOUR::Colour::White(()) => (1, 2),
     };
 
@@ -98,7 +98,7 @@ fn generate_pawn_targets(
 
     let is_start_rank = matches!(
         (source_square.rank(), chessboard.side_to_move),
-        (6, COLOUR::Colour::Red(())) | (1, COLOUR::Colour::White(()))
+        (6, COLOUR::Colour::Black(())) | (1, COLOUR::Colour::White(()))
     );
 
     let target_two = source_square.change_rank(forward_two).filter(|sq| {
@@ -118,7 +118,7 @@ fn generate_pawn_pushes(
 
     let is_promotion_rank = match chessboard.side_to_move {
         COLOUR::Colour::White(()) => source_square.rank() == 6,
-        COLOUR::Colour::Red(()) => source_square.rank() == 1,
+        COLOUR::Colour::Black(()) => source_square.rank() == 1,
     };
 
     if let Some(tgt1) = target_one {
@@ -148,7 +148,7 @@ fn generate_pawn_pushes2(
     let (_target_one, target_two) = generate_pawn_targets(source_square, chessboard);
 
     let is_red_start =
-        source_square.rank() == 6 && chessboard.side_to_move == COLOUR::Colour::Red(());
+        source_square.rank() == 6 && chessboard.side_to_move == COLOUR::Colour::Black(());
     let is_white_start =
         source_square.rank() == 1 && chessboard.side_to_move == COLOUR::Colour::White(());
 
@@ -245,7 +245,7 @@ where
                 .set_traits(
                     if (chessboard.side_to_move == COLOUR::Colour::White(())
                         && source_square.rank() == 6)
-                        || (chessboard.side_to_move == COLOUR::Colour::Red(())
+                        || (chessboard.side_to_move == COLOUR::Colour::Black(())
                             && source_square.rank() == 1)
                     {
                         &[MOVE::MoveTrait::Capture, MOVE::MoveTrait::Promotion]
@@ -297,7 +297,7 @@ where
                 }
                 None
             }
-            CR::Castling::RK if chessboard.side_to_move == COLOUR::Colour::Red(()) => {
+            CR::Castling::RK if chessboard.side_to_move == COLOUR::Colour::Black(()) => {
                 if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E8, lookup)
                     && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::G8, lookup)
                     && !occ.is_occupied(POSITION::Position::F8)
@@ -307,7 +307,7 @@ where
                 }
                 None
             }
-            CR::Castling::RQ if chessboard.side_to_move == COLOUR::Colour::Red(()) => {
+            CR::Castling::RQ if chessboard.side_to_move == COLOUR::Colour::Black(()) => {
                 if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E8, lookup)
                     && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::C8, lookup)
                     && !occ.is_occupied(POSITION::Position::D8)

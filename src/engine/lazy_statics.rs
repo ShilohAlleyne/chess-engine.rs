@@ -18,7 +18,7 @@ pub(crate) static PAWN_ATTACKS: Lazy<[[BITBOARD::Bitboard; 64]; 2]> = Lazy::new(
             COLOUR::Colour::White(()),
             lookup,
         ),
-        ATTK_GEN::gen_attacks(ATTK_MSK::mask_pawn_attacks, COLOUR::Colour::Red(()), lookup),
+        ATTK_GEN::gen_attacks(ATTK_MSK::mask_pawn_attacks, COLOUR::Colour::Black(()), lookup),
     ]
 });
 
