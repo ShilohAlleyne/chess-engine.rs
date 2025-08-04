@@ -7,6 +7,7 @@ use std::{
     ops::{Index, IndexMut},
     slice::Iter,
 };
+use colored::*;
 
 // This struct contains the bitboards for all
 // of the pieces
@@ -99,12 +100,19 @@ impl fmt::Display for MaterialLayer {
 
         // Render board
         writeln!(f)?;
-        for (i, rank) in board.iter().enumerate() {
-            write!(f, "{} | ", 8 - i)?;
-            for &tile in rank {
+        for (rank_idx, rank) in board.iter().enumerate() {
+            write!(f, "{} | ", 8 - rank_idx)?;
+            for (file_idx, &tile) in rank.iter().enumerate() {
+                let shift = rank_idx % 2;
                 match tile {
                     Some(p) => write!(f, "{} ", p)?,
-                    None => write!(f, ". ")?,
+                    None => {
+                        if (file_idx + shift) % 2 == 0 {
+                            write!(f, "{} ", "\u{26F6}".bright_black())?
+                        } else {
+                            write!(f, "{} ", "\u{26F6}".black())?
+                        }
+                    },
                 }
             }
             writeln!(f)?;
