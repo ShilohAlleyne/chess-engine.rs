@@ -21,7 +21,7 @@ impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Deserialization{input, invalid_char, pos} => {
-                let (left, right): (String, String) = extract_regions(&input, *pos);
+                let (left, right): (String, String) = extract_regions(input, *pos);
 
                 // Calculate offset based on the left-hand region only
                 let offset: usize = "\t".len()                                 // Tab indent

@@ -1,7 +1,8 @@
 use super::{material_layer as ML, occupancy_layer as OCCUPANCY};
 use crate::{
     board::{
-        self, bitboard as BITBOARD, castling as CR, colour as COLOUR, pieces as PIECE, position as POSITION
+        bitboard as BITBOARD, castling as CR, colour as COLOUR, pieces as PIECE,
+        position as POSITION,
     },
     effects::static_attack_provider as STATIC_ATTK_LOOKUP,
     parsers::error::Error,
@@ -17,7 +18,7 @@ pub struct State {
     pub occpancy_layer: OCCUPANCY::OccupancyLayer,
     pub side_to_move: COLOUR::Colour<()>,
     pub en_passant: Option<POSITION::Position>,
-    pub castling: u8,
+    pub castling: CR::CastlingRights,
     pub half_moves: u32,
     pub full_moves: u32,
 }
@@ -39,8 +40,8 @@ impl fmt::Display for State {
         }
 
         write!(f, "Castling rights: ")?;
-        if self.castling > 0 {
-            for (i, castle) in castling_rights_from_bits(self).enumerate() {
+        if self.castling.0 > 0 {
+            for (i, castle) in CR::castling_rights_from_bits(&self.castling).enumerate() {
                 if i > 0 {
                     write!(f, ", ")?;
                 }
@@ -64,7 +65,7 @@ impl Default for State {
             occpancy_layer: OCCUPANCY::OccupancyLayer([BITBOARD::Bitboard::new(); 2]),
             side_to_move: COLOUR::Colour::White(()),
             en_passant: None,
-            castling: 0,
+            castling: CR::CastlingRights::new(),
             half_moves: 0,
             full_moves: 0,
         }
@@ -78,37 +79,11 @@ impl State {
             occpancy_layer: OCCUPANCY::OccupancyLayer::new(),
             side_to_move: COLOUR::Colour::White(()),
             en_passant: None,
-            castling: 0,
+            castling: CR::CastlingRights::new(),
             half_moves: 0,
             full_moves: 0,
         }
     }
-
-    // === Castling Rights bitmask operations ===
-    pub fn set_castling_rights(&mut self, rights: &[CR::CastlingRights]) {
-        self.castling = rights.iter().fold(0, |acc, r| acc | r.get_castlings_bits())
-    }
-
-    pub fn add_castling_right(&mut self, right: CR::CastlingRights) {
-        self.castling |= right.get_castlings_bits();
-    }
-
-    pub fn toggle_castling_rights(&mut self, right: CR::CastlingRights) {
-        self.castling ^= right.get_castlings_bits()
-    }
-}
-
-// === Castling ===
-pub fn castling_rights_from_bits(board: &State) -> impl Iterator<Item = CR::CastlingRights> + '_ {
-    [
-        CR::CastlingRights::WK,
-        CR::CastlingRights::WQ,
-        CR::CastlingRights::RK,
-        CR::CastlingRights::RQ,
-    ]
-    .iter()
-    .copied()
-    .filter(move |r| board.castling & r.get_castlings_bits() != 0)
 }
 
 // === Chess notation parsers ===
@@ -116,10 +91,10 @@ pub fn try_from_fen(fen: &str) -> Result<State, Error> {
     crate::parsers::fen::parse(fen)
 }
 
+// === Chess notation serializers ===
 pub fn to_fen(state: State) -> Result<String, crate::parsers::error::Error> {
     crate::parsers::fen::serialize(state)
 }
-
 
 // === Attacks ===
 pub fn is_attacked<A: PRECOMP::StaticAttack>(
@@ -153,7 +128,7 @@ pub fn current_attacks(board: &State) -> BITBOARD::Bitboard {
     let atk_provider = STATIC_ATTK_LOOKUP::StaticAttackProvider;
     let mut bb = BITBOARD::Bitboard::new();
 
-for pos in POSITION::Position::iter() {
+    for pos in POSITION::Position::iter() {
         if is_attacked(board, pos, atk_provider) {
             bb.mutate_set_bit(pos);
         }

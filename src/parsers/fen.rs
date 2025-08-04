@@ -15,7 +15,7 @@ enum Token {
     Material(PIECE::Piece),
     EmptySquares(u32),
     ActiveColour(COLOUR::Colour<()>),
-    Castling(CR::CastlingRights),
+    Castling(CR::Castling),
     Enpassant(Option<POSITION::Position>),
     HalfMove(u32),
     FullMove(u32),
@@ -71,7 +71,7 @@ pub(crate) fn parse(input: &str) -> Result<BOARDSTATE::State, crate::parsers::er
             }
             Token::EmptySquares(sq) => file += sq,
             Token::ActiveColour(colour) => board.side_to_move = colour,
-            Token::Castling(cr) => board.add_castling_right(cr),
+            Token::Castling(cr) => board.castling.add_castling_right(cr),
             Token::Enpassant(en) => board.en_passant = en,
             Token::HalfMove(count) => board.half_moves = count,
             Token::FullMove(count) => board.full_moves = count,
@@ -133,11 +133,11 @@ fn tokenize(input: &str) -> Vec<Token> {
             },
 
             Region::CastlingRights => match character {
-                'K' => Token::Castling(CR::CastlingRights::WK),
-                'Q' => Token::Castling(CR::CastlingRights::WQ),
-                'k' => Token::Castling(CR::CastlingRights::RK),
-                'q' => Token::Castling(CR::CastlingRights::RQ),
-                '-' => Token::Castling(CR::CastlingRights::None),
+                'K' => Token::Castling(CR::Castling::WK),
+                'Q' => Token::Castling(CR::Castling::WQ),
+                'k' => Token::Castling(CR::Castling::RK),
+                'q' => Token::Castling(CR::Castling::RQ),
+                '-' => Token::Castling(CR::Castling::None),
                 ' ' => {
                     region.advance();
                     Token::NextRegion
@@ -281,13 +281,13 @@ pub fn serialize(state: BOARDSTATE::State) -> Result<String, crate::parsers::err
     }
     .to_owned();
 
-    let castling = BOARDSTATE::castling_rights_from_bits(&state)
+    let castling = CR::castling_rights_from_bits(&state.castling)
         .map(|cr| match cr {
-            CR::CastlingRights::None => "-",
-            CR::CastlingRights::WK => "K",
-            CR::CastlingRights::WQ => "Q",
-            CR::CastlingRights::RK => "k",
-            CR::CastlingRights::RQ => "q",
+            CR::Castling::None => "-",
+            CR::Castling::WK => "K",
+            CR::Castling::WQ => "Q",
+            CR::Castling::RK => "k",
+            CR::Castling::RQ => "q",
         })
         .join("");
 

@@ -274,9 +274,9 @@ where
     A: PRECOMP::StaticAttack + Copy + 'static,
 {
     let occ = OCCUPANCY::get_both(&chessboard.occpancy_layer);
-    BOARDSTATE::castling_rights_from_bits(chessboard)
+    CR::castling_rights_from_bits(&chessboard.castling)
         .flat_map(move |cr| match cr {
-            CR::CastlingRights::WK if chessboard.side_to_move == COLOUR::Colour::White(()) => {
+            CR::Castling::WK if chessboard.side_to_move == COLOUR::Colour::White(()) => {
                 if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E1, lookup)
                     && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::G1, lookup)
                     && !occ.is_occupied(POSITION::Position::F1)
@@ -286,7 +286,7 @@ where
                 }
                 None
             }
-            CR::CastlingRights::WQ if chessboard.side_to_move == COLOUR::Colour::White(()) => {
+            CR::Castling::WQ if chessboard.side_to_move == COLOUR::Colour::White(()) => {
                 if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E1, lookup)
                     && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::C1, lookup)
                     && !occ.is_occupied(POSITION::Position::D1)
@@ -297,7 +297,7 @@ where
                 }
                 None
             }
-            CR::CastlingRights::RK if chessboard.side_to_move == COLOUR::Colour::Red(()) => {
+            CR::Castling::RK if chessboard.side_to_move == COLOUR::Colour::Red(()) => {
                 if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E8, lookup)
                     && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::G8, lookup)
                     && !occ.is_occupied(POSITION::Position::F8)
@@ -307,7 +307,7 @@ where
                 }
                 None
             }
-            CR::CastlingRights::RQ if chessboard.side_to_move == COLOUR::Colour::Red(()) => {
+            CR::Castling::RQ if chessboard.side_to_move == COLOUR::Colour::Red(()) => {
                 if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E8, lookup)
                     && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::C8, lookup)
                     && !occ.is_occupied(POSITION::Position::D8)
