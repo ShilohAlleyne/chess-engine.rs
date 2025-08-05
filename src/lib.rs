@@ -26,6 +26,7 @@ pub mod gamestate {
     pub mod boardstate;
     pub mod occupancy_layer;
     pub mod material_layer;
+    pub mod delta;
 }
 
 pub mod traits {

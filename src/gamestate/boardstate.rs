@@ -1,8 +1,8 @@
-use super::{material_layer as ML, occupancy_layer as OCCUPANCY};
+use super::{material_layer, occupancy_layer};
 use crate::{
     board::{
-        bitboard as BITBOARD, castling as CR, colour as COLOUR, pieces as PIECE,
-        position as POSITION,
+        bitboard, castling, colour, pieces,
+        position,
     },
     effects::static_attack_provider as STATIC_ATTK_LOOKUP,
     parsers::error::Error,
@@ -12,13 +12,13 @@ use std::fmt;
 use strum::IntoEnumIterator;
 
 // === The full chessboard with meta data ===
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct State {
-    pub material_layer: ML::MaterialLayer,
-    pub occpancy_layer: OCCUPANCY::OccupancyLayer,
-    pub side_to_move: COLOUR::Colour<()>,
-    pub en_passant: Option<POSITION::Position>,
-    pub castling: CR::CastlingRights,
+    pub material_layer: material_layer::MaterialLayer,
+    pub occpancy_layer: occupancy_layer::OccupancyLayer,
+    pub side_to_move: colour::Colour<()>,
+    pub en_passant: Option<position::Position>,
+    pub castling: castling::CastlingRights,
     pub half_moves: u32,
     pub full_moves: u32,
 }
@@ -27,8 +27,8 @@ pub struct State {
 impl fmt::Display for State {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let side_to_move: &str = match self.side_to_move {
-            COLOUR::Colour::White(()) => "White",
-            COLOUR::Colour::Black(()) => "Black",
+            colour::Colour::White(()) => "White",
+            colour::Colour::Black(()) => "Black",
         };
 
         writeln!(f, "{}", self.material_layer)?;
@@ -41,7 +41,7 @@ impl fmt::Display for State {
 
         write!(f, "Castling rights: ")?;
         if self.castling.0 > 0 {
-            for (i, castle) in CR::castling_rights_from_bits(&self.castling).enumerate() {
+            for (i, castle) in castling::castling_rights_from_bits(self.castling).enumerate() {
                 if i > 0 {
                     write!(f, ", ")?;
                 }
@@ -61,11 +61,11 @@ impl fmt::Display for State {
 impl Default for State {
     fn default() -> Self {
         Self {
-            material_layer: ML::MaterialLayer([BITBOARD::Bitboard::new(); 12]),
-            occpancy_layer: OCCUPANCY::OccupancyLayer([BITBOARD::Bitboard::new(); 2]),
-            side_to_move: COLOUR::Colour::White(()),
+            material_layer: material_layer::MaterialLayer([bitboard::Bitboard::new(); 12]),
+            occpancy_layer: occupancy_layer::OccupancyLayer([bitboard::Bitboard::new(); 2]),
+            side_to_move: colour::Colour::White(()),
             en_passant: None,
-            castling: CR::CastlingRights::new(),
+            castling: castling::CastlingRights::new(),
             half_moves: 0,
             full_moves: 0,
         }
@@ -75,11 +75,11 @@ impl Default for State {
 impl State {
     pub fn new() -> Self {
         Self {
-            material_layer: ML::MaterialLayer::new(),
-            occpancy_layer: OCCUPANCY::OccupancyLayer::new(),
-            side_to_move: COLOUR::Colour::White(()),
+            material_layer: material_layer::MaterialLayer::new(),
+            occpancy_layer: occupancy_layer::OccupancyLayer::new(),
+            side_to_move: colour::Colour::White(()),
             en_passant: None,
-            castling: CR::CastlingRights::new(),
+            castling: castling::CastlingRights::new(),
             half_moves: 0,
             full_moves: 0,
         }
@@ -99,36 +99,36 @@ pub fn to_fen(state: State) -> Result<String, crate::parsers::error::Error> {
 // === Attacks ===
 pub fn is_attacked<A: PRECOMP::StaticAttack>(
     board: &State,
-    pos: POSITION::Position,
+    pos: position::Position,
     sttk_attk: A,
 ) -> bool {
-    let occ = OCCUPANCY::get_both(&board.occpancy_layer);
+    let occ = occupancy_layer::get_both(&board.occpancy_layer);
     let attacker = board.side_to_move.opp();
 
     [
-        board.material_layer[PIECE::from_colour_kind(&attacker, PIECE::Kind::Pawn)]
+        board.material_layer[pieces::from_colour_kind(&attacker, pieces::Kind::Pawn)]
             & sttk_attk.pawn(pos, attacker),
-        board.material_layer[PIECE::from_colour_kind(&attacker, PIECE::Kind::Knight)]
+        board.material_layer[pieces::from_colour_kind(&attacker, pieces::Kind::Knight)]
             & sttk_attk.knight(pos),
-        board.material_layer[PIECE::from_colour_kind(&attacker, PIECE::Kind::King)]
+        board.material_layer[pieces::from_colour_kind(&attacker, pieces::Kind::King)]
             & sttk_attk.knight(pos), // ← intentional reuse? Maybe clarify if king table is separate
-        board.material_layer[PIECE::from_colour_kind(&attacker, PIECE::Kind::Bishop)]
+        board.material_layer[pieces::from_colour_kind(&attacker, pieces::Kind::Bishop)]
             & sttk_attk.bishop(pos, occ),
-        board.material_layer[PIECE::from_colour_kind(&attacker, PIECE::Kind::Rook)]
+        board.material_layer[pieces::from_colour_kind(&attacker, pieces::Kind::Rook)]
             & sttk_attk.rook(pos, occ),
-        board.material_layer[PIECE::from_colour_kind(&attacker, PIECE::Kind::Queen)]
+        board.material_layer[pieces::from_colour_kind(&attacker, pieces::Kind::Queen)]
             & sttk_attk.queen(pos, occ),
     ]
     .iter()
     .any(|bb| bb.0 != 0)
 }
 
-pub fn current_attacks(board: &State) -> BITBOARD::Bitboard {
+pub fn current_attacks(board: &State) -> bitboard::Bitboard {
     // Marker for static lookup
     let atk_provider = STATIC_ATTK_LOOKUP::StaticAttackProvider;
-    let mut bb = BITBOARD::Bitboard::new();
+    let mut bb = bitboard::Bitboard::new();
 
-    for pos in POSITION::Position::iter() {
+    for pos in position::Position::iter() {
         if is_attacked(board, pos, atk_provider) {
             bb.mutate_set_bit(pos);
         }
@@ -137,10 +137,10 @@ pub fn current_attacks(board: &State) -> BITBOARD::Bitboard {
     bb
 }
 
-pub fn get_piece_at_pos(board: &State, pos: POSITION::Position) -> Option<PIECE::Piece> {
+pub fn get_piece_at_pos(board: &State, pos: position::Position) -> Option<pieces::Piece> {
     for (i, bb) in board.material_layer.0.iter().enumerate() {
         if bb.is_occupied(pos) {
-            return PIECE::Piece::try_from(i).ok();
+            return pieces::Piece::try_from(i).ok();
         }
     }
 

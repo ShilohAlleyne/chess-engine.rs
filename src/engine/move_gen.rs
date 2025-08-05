@@ -1,16 +1,16 @@
 use crate::{
     board::{
-        bitboard as BITBOARD, castling as CR, colour as COLOUR, pieces as PIECES,
-        position as POSITION,
+        bitboard, castling, colour, pieces,
+        position,
     },
     engine::movement as MOVE,
-    gamestate::{boardstate as BOARDSTATE, occupancy_layer as OCCUPANCY},
+    gamestate::{boardstate, occupancy_layer},
     traits::static_lookup as PRECOMP,
 };
 use itertools::chain;
 
 pub fn generate_moves<A>(
-    chessboard: &BOARDSTATE::State,
+    chessboard: &boardstate::State,
     lookup: A,
 ) -> impl Iterator<Item = MOVE::Move> + '_
 where
@@ -20,53 +20,53 @@ where
     chain!(
         generate_pawn_moves(
             chessboard.material_layer
-                [PIECES::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Pawn)],
+                [pieces::from_colour_kind(&chessboard.side_to_move, pieces::Kind::Pawn)],
             chessboard,
             lookup,
         ),
         generate_castle_moves(chessboard, lookup),
         generate_major_piece_moves(
             chessboard.material_layer
-                [PIECES::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Knight)],
+                [pieces::from_colour_kind(&chessboard.side_to_move, pieces::Kind::Knight)],
             chessboard,
             lookup,
-            PIECES::Kind::Knight,
+            pieces::Kind::Knight,
         ),
         generate_major_piece_moves(
             chessboard.material_layer
-                [PIECES::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Rook)],
+                [pieces::from_colour_kind(&chessboard.side_to_move, pieces::Kind::Rook)],
             chessboard,
             lookup,
-            PIECES::Kind::Rook,
+            pieces::Kind::Rook,
         ),
         generate_major_piece_moves(
             chessboard.material_layer
-                [PIECES::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Bishop)],
+                [pieces::from_colour_kind(&chessboard.side_to_move, pieces::Kind::Bishop)],
             chessboard,
             lookup,
-            PIECES::Kind::Bishop,
+            pieces::Kind::Bishop,
         ),
         generate_major_piece_moves(
             chessboard.material_layer
-                [PIECES::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Queen)],
+                [pieces::from_colour_kind(&chessboard.side_to_move, pieces::Kind::Queen)],
             chessboard,
             lookup,
-            PIECES::Kind::Queen,
+            pieces::Kind::Queen,
         ),
         generate_major_piece_moves(
             chessboard.material_layer
-                [PIECES::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::King)],
+                [pieces::from_colour_kind(&chessboard.side_to_move, pieces::Kind::King)],
             chessboard,
             lookup,
-            PIECES::Kind::King,
+            pieces::Kind::King,
         ),
     )
 }
 
 // === Individual piece move gen ===
 pub fn generate_pawn_moves<A>(
-    board: BITBOARD::Bitboard,
-    chessboard: &BOARDSTATE::State,
+    board: bitboard::Bitboard,
+    chessboard: &boardstate::State,
     lookup: A,
 ) -> impl Iterator<Item = MOVE::Move> + '_
 where
@@ -84,25 +84,25 @@ where
 }
 
 fn generate_pawn_targets(
-    source_square: POSITION::Position,
-    chessboard: &BOARDSTATE::State,
-) -> (Option<POSITION::Position>, Option<POSITION::Position>) {
+    source_square: position::Position,
+    chessboard: &boardstate::State,
+) -> (Option<position::Position>, Option<position::Position>) {
     let (forward_one, forward_two) = match chessboard.side_to_move {
-        COLOUR::Colour::Black(()) => (-1, -2),
-        COLOUR::Colour::White(()) => (1, 2),
+        colour::Colour::Black(()) => (-1, -2),
+        colour::Colour::White(()) => (1, 2),
     };
 
     let target_one = source_square
         .change_rank(forward_one)
-        .filter(|sq| !OCCUPANCY::get_both(&chessboard.occpancy_layer).is_occupied(sq));
+        .filter(|sq| !occupancy_layer::get_both(&chessboard.occpancy_layer).is_occupied(sq));
 
     let is_start_rank = matches!(
         (source_square.rank(), chessboard.side_to_move),
-        (6, COLOUR::Colour::Black(())) | (1, COLOUR::Colour::White(()))
+        (6, colour::Colour::Black(())) | (1, colour::Colour::White(()))
     );
 
     let target_two = source_square.change_rank(forward_two).filter(|sq| {
-        !OCCUPANCY::get_both(&chessboard.occpancy_layer).is_occupied(sq)
+        !occupancy_layer::get_both(&chessboard.occpancy_layer).is_occupied(sq)
             && target_one.is_some()
             && is_start_rank
     });
@@ -111,21 +111,21 @@ fn generate_pawn_targets(
 }
 
 fn generate_pawn_pushes(
-    source_square: POSITION::Position,
-    chessboard: &BOARDSTATE::State,
+    source_square: position::Position,
+    chessboard: &boardstate::State,
 ) -> Option<MOVE::Move> {
     let (target_one, _target_two) = generate_pawn_targets(source_square, chessboard);
 
     let is_promotion_rank = match chessboard.side_to_move {
-        COLOUR::Colour::White(()) => source_square.rank() == 6,
-        COLOUR::Colour::Black(()) => source_square.rank() == 1,
+        colour::Colour::White(()) => source_square.rank() == 6,
+        colour::Colour::Black(()) => source_square.rank() == 1,
     };
 
     if let Some(tgt1) = target_one {
         let mv = MOVE::MoveBuilder::new()
-            .set_piece(PIECES::from_colour_kind(
+            .set_piece(pieces::from_colour_kind(
                 &chessboard.side_to_move,
-                PIECES::Kind::Pawn,
+                pieces::Kind::Pawn,
             ))
             .set_source(source_square)
             .set_target(tgt1)
@@ -142,24 +142,24 @@ fn generate_pawn_pushes(
 }
 
 fn generate_pawn_pushes2(
-    source_square: POSITION::Position,
-    chessboard: &BOARDSTATE::State,
+    source_square: position::Position,
+    chessboard: &boardstate::State,
 ) -> Option<MOVE::Move> {
     let (_target_one, target_two) = generate_pawn_targets(source_square, chessboard);
 
     let is_red_start =
-        source_square.rank() == 6 && chessboard.side_to_move == COLOUR::Colour::Black(());
+        source_square.rank() == 6 && chessboard.side_to_move == colour::Colour::Black(());
     let is_white_start =
-        source_square.rank() == 1 && chessboard.side_to_move == COLOUR::Colour::White(());
+        source_square.rank() == 1 && chessboard.side_to_move == colour::Colour::White(());
 
     if is_red_start || is_white_start {
         if let Some(tgt2) = target_two {
             return Some(
                 MOVE::MoveBuilder::new()
                     .set_traits(&[MOVE::MoveTrait::Quiet])
-                    .set_piece(PIECES::from_colour_kind(
+                    .set_piece(pieces::from_colour_kind(
                         &chessboard.side_to_move,
-                        PIECES::Kind::Pawn,
+                        pieces::Kind::Pawn,
                     ))
                     .set_source(source_square)
                     .set_target(tgt2)
@@ -172,8 +172,8 @@ fn generate_pawn_pushes2(
 }
 
 fn generate_enpassant<A: PRECOMP::StaticAttack + Copy>(
-    source_square: POSITION::Position,
-    chessboard: &BOARDSTATE::State,
+    source_square: position::Position,
+    chessboard: &boardstate::State,
     lookup: A,
 ) -> Option<MOVE::Move> {
     if let Some(en) = chessboard.en_passant {
@@ -182,9 +182,9 @@ fn generate_enpassant<A: PRECOMP::StaticAttack + Copy>(
         if !en_attacks.is_empty() {
             if let Some(target) = en_attacks.get_ls1b() {
                 let detail = MOVE::Detail {
-                    piece: PIECES::from_colour_kind(
+                    piece: pieces::from_colour_kind(
                         &chessboard.side_to_move,
-                        PIECES::Kind::Pawn,
+                        pieces::Kind::Pawn,
                     ),
                     source: source_square,
                     target,
@@ -197,15 +197,15 @@ fn generate_enpassant<A: PRECOMP::StaticAttack + Copy>(
                     } else {
                         &[MOVE::MoveTrait::Enpassant]
                     })
-                    .set_piece(PIECES::from_colour_kind(
+                    .set_piece(pieces::from_colour_kind(
                         &chessboard.side_to_move,
-                        PIECES::Kind::Pawn,
+                        pieces::Kind::Pawn,
                     ))
                     .set_source(source_square)
                     .set_target(target)
-                    .captures(PIECES::from_colour_kind(
+                    .captures(pieces::from_colour_kind(
                         &chessboard.side_to_move.opp(),
-                        PIECES::Kind::Pawn,
+                        pieces::Kind::Pawn,
                     ))
                     .build();
 
@@ -218,8 +218,8 @@ fn generate_enpassant<A: PRECOMP::StaticAttack + Copy>(
 }
 
 fn generate_pawn_captures<A>(
-    source_square: POSITION::Position,
-    chessboard: &BOARDSTATE::State,
+    source_square: position::Position,
+    chessboard: &boardstate::State,
     lookup: A,
 ) -> impl Iterator<Item = MOVE::Move> + '_
 where
@@ -229,7 +229,7 @@ where
         & chessboard.occpancy_layer.0[chessboard.side_to_move.opp()];
 
     targets.into_iter().filter_map(move |target| {
-        let piece = PIECES::from_colour_kind(&chessboard.side_to_move, PIECES::Kind::Pawn);
+        let piece = pieces::from_colour_kind(&chessboard.side_to_move, pieces::Kind::Pawn);
         let checks = into_check(
             &MOVE::Detail {
                 piece,
@@ -240,12 +240,12 @@ where
             lookup,
         );
 
-        BOARDSTATE::get_piece_at_pos(chessboard, target).map(|capture| {
+        boardstate::get_piece_at_pos(chessboard, target).map(|capture| {
             MOVE::MoveBuilder::new()
                 .set_traits(
-                    if (chessboard.side_to_move == COLOUR::Colour::White(())
+                    if (chessboard.side_to_move == colour::Colour::White(())
                         && source_square.rank() == 6)
-                        || (chessboard.side_to_move == COLOUR::Colour::Black(())
+                        || (chessboard.side_to_move == colour::Colour::Black(())
                             && source_square.rank() == 1)
                     {
                         &[MOVE::MoveTrait::Capture, MOVE::MoveTrait::Promotion]
@@ -267,54 +267,54 @@ where
 // === Castle moves ===
 // Add castling into check
 pub fn generate_castle_moves<A>(
-    chessboard: &BOARDSTATE::State,
+    chessboard: &boardstate::State,
     lookup: A,
 ) -> impl Iterator<Item = MOVE::Move> + '_
 where
     A: PRECOMP::StaticAttack + Copy + 'static,
 {
-    let occ = OCCUPANCY::get_both(&chessboard.occpancy_layer);
-    CR::castling_rights_from_bits(&chessboard.castling)
+    let occ = occupancy_layer::get_both(&chessboard.occpancy_layer);
+    castling::castling_rights_from_bits(chessboard.castling)
         .flat_map(move |cr| match cr {
-            CR::Castling::WK if chessboard.side_to_move == COLOUR::Colour::White(()) => {
-                if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E1, lookup)
-                    && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::G1, lookup)
-                    && !occ.is_occupied(POSITION::Position::F1)
-                    && !occ.is_occupied(POSITION::Position::G1)
+            castling::Castling::WK if chessboard.side_to_move == colour::Colour::White(()) => {
+                if !boardstate::is_attacked(chessboard, position::Position::E1, lookup)
+                    && !boardstate::is_attacked(chessboard, position::Position::G1, lookup)
+                    && !occ.is_occupied(position::Position::F1)
+                    && !occ.is_occupied(position::Position::G1)
                 {
-                    return Some((POSITION::Position::E1, POSITION::Position::G1));
+                    return Some((position::Position::E1, position::Position::G1));
                 }
                 None
             }
-            CR::Castling::WQ if chessboard.side_to_move == COLOUR::Colour::White(()) => {
-                if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E1, lookup)
-                    && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::C1, lookup)
-                    && !occ.is_occupied(POSITION::Position::D1)
-                    && !occ.is_occupied(POSITION::Position::C1)
-                    && !occ.is_occupied(POSITION::Position::B1)
+            castling::Castling::WQ if chessboard.side_to_move == colour::Colour::White(()) => {
+                if !boardstate::is_attacked(chessboard, position::Position::E1, lookup)
+                    && !boardstate::is_attacked(chessboard, position::Position::C1, lookup)
+                    && !occ.is_occupied(position::Position::D1)
+                    && !occ.is_occupied(position::Position::C1)
+                    && !occ.is_occupied(position::Position::B1)
                 {
-                    return Some((POSITION::Position::E1, POSITION::Position::C1));
+                    return Some((position::Position::E1, position::Position::C1));
                 }
                 None
             }
-            CR::Castling::RK if chessboard.side_to_move == COLOUR::Colour::Black(()) => {
-                if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E8, lookup)
-                    && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::G8, lookup)
-                    && !occ.is_occupied(POSITION::Position::F8)
-                    && !occ.is_occupied(POSITION::Position::G8)
+            castling::Castling::RK if chessboard.side_to_move == colour::Colour::Black(()) => {
+                if !boardstate::is_attacked(chessboard, position::Position::E8, lookup)
+                    && !boardstate::is_attacked(chessboard, position::Position::G8, lookup)
+                    && !occ.is_occupied(position::Position::F8)
+                    && !occ.is_occupied(position::Position::G8)
                 {
-                    return Some((POSITION::Position::E8, POSITION::Position::G8));
+                    return Some((position::Position::E8, position::Position::G8));
                 }
                 None
             }
-            CR::Castling::RQ if chessboard.side_to_move == COLOUR::Colour::Black(()) => {
-                if !BOARDSTATE::is_attacked(chessboard, POSITION::Position::E8, lookup)
-                    && !BOARDSTATE::is_attacked(chessboard, POSITION::Position::C8, lookup)
-                    && !occ.is_occupied(POSITION::Position::D8)
-                    && !occ.is_occupied(POSITION::Position::C8)
-                    && !occ.is_occupied(POSITION::Position::B8)
+            castling::Castling::RQ if chessboard.side_to_move == colour::Colour::Black(()) => {
+                if !boardstate::is_attacked(chessboard, position::Position::E8, lookup)
+                    && !boardstate::is_attacked(chessboard, position::Position::C8, lookup)
+                    && !occ.is_occupied(position::Position::D8)
+                    && !occ.is_occupied(position::Position::C8)
+                    && !occ.is_occupied(position::Position::B8)
                 {
-                    return Some((POSITION::Position::E8, POSITION::Position::C8));
+                    return Some((position::Position::E8, position::Position::C8));
                 }
                 None
             }
@@ -331,10 +331,10 @@ where
 
 // === Major piece moves ===
 fn generate_major_piece_moves<A>(
-    board: BITBOARD::Bitboard,
-    chessboard: &BOARDSTATE::State,
+    board: bitboard::Bitboard,
+    chessboard: &boardstate::State,
     lookup: A,
-    piece: PIECES::Kind,
+    piece: pieces::Kind,
 ) -> impl Iterator<Item = MOVE::Move> + '_
 where
     A: PRECOMP::StaticAttack + Copy + 'static,
@@ -342,41 +342,41 @@ where
     board.into_iter().flat_map(move |source_square| {
         // Lookup relavent attacks
         let raw_attacks = match piece {
-            PIECES::Kind::Bishop => lookup.bishop(
+            pieces::Kind::Bishop => lookup.bishop(
                 source_square,
-                OCCUPANCY::get_both(&chessboard.occpancy_layer),
+                occupancy_layer::get_both(&chessboard.occpancy_layer),
             ),
-            PIECES::Kind::Knight => lookup.knight(source_square),
-            PIECES::Kind::Rook => lookup.rook(
+            pieces::Kind::Knight => lookup.knight(source_square),
+            pieces::Kind::Rook => lookup.rook(
                 source_square,
-                OCCUPANCY::get_both(&chessboard.occpancy_layer),
+                occupancy_layer::get_both(&chessboard.occpancy_layer),
             ),
-            PIECES::Kind::Queen => lookup.queen(
+            pieces::Kind::Queen => lookup.queen(
                 source_square,
-                OCCUPANCY::get_both(&chessboard.occpancy_layer),
+                occupancy_layer::get_both(&chessboard.occpancy_layer),
             ),
-            PIECES::Kind::King => lookup.king(source_square),
+            pieces::Kind::King => lookup.king(source_square),
             // Minor piece
-            PIECES::Kind::Pawn => unreachable!(),
+            pieces::Kind::Pawn => unreachable!(),
         };
         // Init attacks
         let attacks = raw_attacks & !chessboard.occpancy_layer[chessboard.side_to_move];
 
         attacks.into_iter().map(move |trgt| {
             let detail = MOVE::Detail {
-                piece: PIECES::from_colour_kind(&chessboard.side_to_move, piece),
+                piece: pieces::from_colour_kind(&chessboard.side_to_move, piece),
                 source: source_square,
                 target: trgt,
             };
 
-            if let Some(capture) = BOARDSTATE::get_piece_at_pos(chessboard, trgt) {
+            if let Some(capture) = boardstate::get_piece_at_pos(chessboard, trgt) {
                 return MOVE::MoveBuilder::new()
                     .set_traits(if into_check(&detail, chessboard, lookup) {
                         &[MOVE::MoveTrait::Check, MOVE::MoveTrait::Capture]
                     } else {
                         &[MOVE::MoveTrait::Capture]
                     })
-                    .set_piece(PIECES::from_colour_kind(
+                    .set_piece(pieces::from_colour_kind(
                         &chessboard.side_to_move,
                         piece,
                     ))
@@ -392,7 +392,7 @@ where
                 } else {
                     &[MOVE::MoveTrait::Quiet]
                 })
-                .set_piece(PIECES::from_colour_kind(
+                .set_piece(pieces::from_colour_kind(
                     &chessboard.side_to_move,
                     piece,
                 ))
@@ -405,30 +405,30 @@ where
 
 fn into_check<A: PRECOMP::StaticAttack>(
     detail: &MOVE::Detail,
-    chessboard: &BOARDSTATE::State,
+    chessboard: &boardstate::State,
     lookup: A,
 ) -> bool {
-    let raw_attacks = match PIECES::get_kind(&detail.piece) {
-        PIECES::Kind::Bishop => lookup.bishop(
+    let raw_attacks = match pieces::get_kind(&detail.piece) {
+        pieces::Kind::Bishop => lookup.bishop(
             detail.target,
-            OCCUPANCY::get_both(&chessboard.occpancy_layer),
+            occupancy_layer::get_both(&chessboard.occpancy_layer),
         ),
-        PIECES::Kind::Knight => lookup.knight(detail.target),
-        PIECES::Kind::Rook => lookup.rook(
+        pieces::Kind::Knight => lookup.knight(detail.target),
+        pieces::Kind::Rook => lookup.rook(
             detail.target,
-            OCCUPANCY::get_both(&chessboard.occpancy_layer),
+            occupancy_layer::get_both(&chessboard.occpancy_layer),
         ),
-        PIECES::Kind::Queen => lookup.queen(
+        pieces::Kind::Queen => lookup.queen(
             detail.target,
-            OCCUPANCY::get_both(&chessboard.occpancy_layer),
+            occupancy_layer::get_both(&chessboard.occpancy_layer),
         ),
-        PIECES::Kind::King => lookup.king(detail.target),
-        PIECES::Kind::Pawn => lookup.pawn(detail.target, chessboard.side_to_move),
+        pieces::Kind::King => lookup.king(detail.target),
+        pieces::Kind::Pawn => lookup.pawn(detail.target, chessboard.side_to_move),
     };
 
     // We Not here as we want to know if there IS a king attack
     let king_bb = chessboard.material_layer
-        [PIECES::from_colour_kind(&chessboard.side_to_move.opp(), PIECES::Kind::King)];
+        [pieces::from_colour_kind(&chessboard.side_to_move.opp(), pieces::Kind::King)];
 
     !(raw_attacks & king_bb).is_empty()
 }

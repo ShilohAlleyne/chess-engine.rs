@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct CastlingRights(pub u8);
 
 impl CastlingRights {
@@ -28,7 +28,7 @@ impl Default for CastlingRights {
     }
 }
 
-pub fn castling_rights_from_bits(cr: &CastlingRights) -> impl Iterator<Item = Castling> + '_ {
+pub fn castling_rights_from_bits(cr: CastlingRights) -> impl Iterator<Item = Castling> {
     [
         Castling::WK,
         Castling::WQ,

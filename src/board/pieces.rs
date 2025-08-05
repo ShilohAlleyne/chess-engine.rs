@@ -1,15 +1,15 @@
-use crate::board::colour as COLOUR;
+use crate::board::colour;
 use colored::*;
 use std::fmt::{self};
 
 #[derive(Debug, Clone, Copy)]
-pub struct Piece(pub COLOUR::Colour<Kind>);
+pub struct Piece(pub colour::Colour<Kind>);
 
 impl fmt::Display for Piece {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.0 {
-            COLOUR::Colour::Black(kind) => write!(f, "{}", kind.to_string().red()),
-            COLOUR::Colour::White(kind) => write!(f, "{}", kind.to_string().white()),
+            colour::Colour::Black(kind) => write!(f, "{}", kind.to_string().red()),
+            colour::Colour::White(kind) => write!(f, "{}", kind.to_string().white()),
         }
     }
 }
@@ -19,18 +19,18 @@ impl TryFrom<&char> for Piece {
 
     fn try_from(c: &char) -> Result<Self, Self::Error> {
         match *c {
-            'P' => Ok(Piece(COLOUR::Colour::White(Kind::Pawn))),
-            'N' => Ok(Piece(COLOUR::Colour::White(Kind::Knight))),
-            'B' => Ok(Piece(COLOUR::Colour::White(Kind::Bishop))),
-            'R' => Ok(Piece(COLOUR::Colour::White(Kind::Rook))),
-            'Q' => Ok(Piece(COLOUR::Colour::White(Kind::Queen))),
-            'K' => Ok(Piece(COLOUR::Colour::White(Kind::King))),
-            'p' => Ok(Piece(COLOUR::Colour::Black(Kind::Pawn))),
-            'n' => Ok(Piece(COLOUR::Colour::Black(Kind::Knight))),
-            'b' => Ok(Piece(COLOUR::Colour::Black(Kind::Bishop))),
-            'r' => Ok(Piece(COLOUR::Colour::Black(Kind::Rook))),
-            'q' => Ok(Piece(COLOUR::Colour::Black(Kind::Queen))),
-            'k' => Ok(Piece(COLOUR::Colour::Black(Kind::King))),
+            'P' => Ok(Piece(colour::Colour::White(Kind::Pawn))),
+            'N' => Ok(Piece(colour::Colour::White(Kind::Knight))),
+            'B' => Ok(Piece(colour::Colour::White(Kind::Bishop))),
+            'R' => Ok(Piece(colour::Colour::White(Kind::Rook))),
+            'Q' => Ok(Piece(colour::Colour::White(Kind::Queen))),
+            'K' => Ok(Piece(colour::Colour::White(Kind::King))),
+            'p' => Ok(Piece(colour::Colour::Black(Kind::Pawn))),
+            'n' => Ok(Piece(colour::Colour::Black(Kind::Knight))),
+            'b' => Ok(Piece(colour::Colour::Black(Kind::Bishop))),
+            'r' => Ok(Piece(colour::Colour::Black(Kind::Rook))),
+            'q' => Ok(Piece(colour::Colour::Black(Kind::Queen))),
+            'k' => Ok(Piece(colour::Colour::Black(Kind::King))),
             _bad_char => Err(super::error::Error::Deserialization(format!(
                 "The character: {} cannot be de-serialised to type Piece.",
                 _bad_char
@@ -44,18 +44,18 @@ impl TryFrom<char> for Piece {
 
     fn try_from(c: char) -> Result<Self, Self::Error> {
         match c {
-            'P' => Ok(Piece(COLOUR::Colour::White(Kind::Pawn))),
-            'N' => Ok(Piece(COLOUR::Colour::White(Kind::Knight))),
-            'B' => Ok(Piece(COLOUR::Colour::White(Kind::Bishop))),
-            'R' => Ok(Piece(COLOUR::Colour::White(Kind::Rook))),
-            'Q' => Ok(Piece(COLOUR::Colour::White(Kind::Queen))),
-            'K' => Ok(Piece(COLOUR::Colour::White(Kind::King))),
-            'p' => Ok(Piece(COLOUR::Colour::Black(Kind::Pawn))),
-            'n' => Ok(Piece(COLOUR::Colour::Black(Kind::Knight))),
-            'b' => Ok(Piece(COLOUR::Colour::Black(Kind::Bishop))),
-            'r' => Ok(Piece(COLOUR::Colour::Black(Kind::Rook))),
-            'q' => Ok(Piece(COLOUR::Colour::Black(Kind::Queen))),
-            'k' => Ok(Piece(COLOUR::Colour::Black(Kind::King))),
+            'P' => Ok(Piece(colour::Colour::White(Kind::Pawn))),
+            'N' => Ok(Piece(colour::Colour::White(Kind::Knight))),
+            'B' => Ok(Piece(colour::Colour::White(Kind::Bishop))),
+            'R' => Ok(Piece(colour::Colour::White(Kind::Rook))),
+            'Q' => Ok(Piece(colour::Colour::White(Kind::Queen))),
+            'K' => Ok(Piece(colour::Colour::White(Kind::King))),
+            'p' => Ok(Piece(colour::Colour::Black(Kind::Pawn))),
+            'n' => Ok(Piece(colour::Colour::Black(Kind::Knight))),
+            'b' => Ok(Piece(colour::Colour::Black(Kind::Bishop))),
+            'r' => Ok(Piece(colour::Colour::Black(Kind::Rook))),
+            'q' => Ok(Piece(colour::Colour::Black(Kind::Queen))),
+            'k' => Ok(Piece(colour::Colour::Black(Kind::King))),
             _bad_char => Err(super::error::Error::Deserialization(format!(
                 "The character: {} cannot be de-serialised to type Piece.",
                 _bad_char
@@ -67,18 +67,18 @@ impl TryFrom<char> for Piece {
 impl From<Piece> for char {
     fn from(piece: Piece) -> Self {
         match piece.0 {
-            COLOUR::Colour::White(Kind::Pawn)   => 'P',
-            COLOUR::Colour::White(Kind::Knight) => 'N',
-            COLOUR::Colour::White(Kind::Bishop) => 'B',
-            COLOUR::Colour::White(Kind::Rook)   => 'R',
-            COLOUR::Colour::White(Kind::Queen)  => 'Q',
-            COLOUR::Colour::White(Kind::King)   => 'K',
-            COLOUR::Colour::Black(Kind::Pawn)     => 'p',
-            COLOUR::Colour::Black(Kind::Knight)   => 'n',
-            COLOUR::Colour::Black(Kind::Bishop)   => 'b',
-            COLOUR::Colour::Black(Kind::Rook)     => 'r',
-            COLOUR::Colour::Black(Kind::Queen)    => 'q',
-            COLOUR::Colour::Black(Kind::King)     => 'k',
+            colour::Colour::White(Kind::Pawn)   => 'P',
+            colour::Colour::White(Kind::Knight) => 'N',
+            colour::Colour::White(Kind::Bishop) => 'B',
+            colour::Colour::White(Kind::Rook)   => 'R',
+            colour::Colour::White(Kind::Queen)  => 'Q',
+            colour::Colour::White(Kind::King)   => 'K',
+            colour::Colour::Black(Kind::Pawn)     => 'p',
+            colour::Colour::Black(Kind::Knight)   => 'n',
+            colour::Colour::Black(Kind::Bishop)   => 'b',
+            colour::Colour::Black(Kind::Rook)     => 'r',
+            colour::Colour::Black(Kind::Queen)    => 'q',
+            colour::Colour::Black(Kind::King)     => 'k',
         }
     }
 }
@@ -88,18 +88,18 @@ impl TryFrom<usize> for Piece {
 
     fn try_from(value: usize) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(Piece(COLOUR::Colour::White(Kind::Pawn))),
-            1 => Ok(Piece(COLOUR::Colour::White(Kind::Knight))),
-            2 => Ok(Piece(COLOUR::Colour::White(Kind::Bishop))),
-            3 => Ok(Piece(COLOUR::Colour::White(Kind::Rook))),
-            4 => Ok(Piece(COLOUR::Colour::White(Kind::Queen))),
-            5 => Ok(Piece(COLOUR::Colour::White(Kind::King))),
-            6 => Ok(Piece(COLOUR::Colour::Black(Kind::Pawn))),
-            7 => Ok(Piece(COLOUR::Colour::Black(Kind::Knight))),
-            8 => Ok(Piece(COLOUR::Colour::Black(Kind::Bishop))),
-            9 => Ok(Piece(COLOUR::Colour::Black(Kind::Rook))),
-            10 => Ok(Piece(COLOUR::Colour::Black(Kind::Queen))),
-            11 => Ok(Piece(COLOUR::Colour::Black(Kind::King))),
+            0 => Ok(Piece(colour::Colour::White(Kind::Pawn))),
+            1 => Ok(Piece(colour::Colour::White(Kind::Knight))),
+            2 => Ok(Piece(colour::Colour::White(Kind::Bishop))),
+            3 => Ok(Piece(colour::Colour::White(Kind::Rook))),
+            4 => Ok(Piece(colour::Colour::White(Kind::Queen))),
+            5 => Ok(Piece(colour::Colour::White(Kind::King))),
+            6 => Ok(Piece(colour::Colour::Black(Kind::Pawn))),
+            7 => Ok(Piece(colour::Colour::Black(Kind::Knight))),
+            8 => Ok(Piece(colour::Colour::Black(Kind::Bishop))),
+            9 => Ok(Piece(colour::Colour::Black(Kind::Rook))),
+            10 => Ok(Piece(colour::Colour::Black(Kind::Queen))),
+            11 => Ok(Piece(colour::Colour::Black(Kind::King))),
             _bad_num => Err(super::error::Error::TypeCoversiton(format!(
                 "The value: {}, cannot be converted to type Piece",
                 _bad_num
@@ -110,7 +110,7 @@ impl TryFrom<usize> for Piece {
 
 impl From<Piece> for u8 {
     fn from(piece: Piece) -> Self {
-        use COLOUR::Colour;
+        use colour::Colour;
 
         // Destructure to get the colour and kind
         let (kind, colour_bit) = match piece.0 {
@@ -134,7 +134,7 @@ impl From<Piece> for u8 {
 impl Piece {
     pub(crate) fn index(&self) -> usize {
         match self.0 {
-            COLOUR::Colour::White(kind) => match kind {
+            colour::Colour::White(kind) => match kind {
                 Kind::Pawn => 0,
                 Kind::Knight => 1,
                 Kind::Bishop => 2,
@@ -142,7 +142,7 @@ impl Piece {
                 Kind::Queen => 4,
                 Kind::King => 5,
             },
-            COLOUR::Colour::Black(kind) => match kind {
+            colour::Colour::Black(kind) => match kind {
                 Kind::Pawn => 6,
                 Kind::Knight => 7,
                 Kind::Bishop => 8,
@@ -154,10 +154,10 @@ impl Piece {
     }
 }
 
-pub(crate) fn from_colour_kind(colour: &COLOUR::Colour<()>, kind: Kind) -> Piece {
+pub(crate) fn from_colour_kind(colour: &colour::Colour<()>, kind: Kind) -> Piece {
     match colour {
-        COLOUR::Colour::White(_) => Piece(COLOUR::Colour::White(kind)),
-        COLOUR::Colour::Black(_) => Piece(COLOUR::Colour::Black(kind)),
+        colour::Colour::White(_) => Piece(colour::Colour::White(kind)),
+        colour::Colour::Black(_) => Piece(colour::Colour::Black(kind)),
     }
 }
 
@@ -185,8 +185,8 @@ pub fn try_from_u8(value: u8) -> Result<Option<Piece>, crate::engine::error::Err
     };
 
     let colour = match colour_flag {
-        0 => COLOUR::Colour::White(kind),
-        1 => COLOUR::Colour::Black(kind),
+        0 => colour::Colour::White(kind),
+        1 => colour::Colour::Black(kind),
         _ => unreachable!(),
     };
 
@@ -195,8 +195,8 @@ pub fn try_from_u8(value: u8) -> Result<Option<Piece>, crate::engine::error::Err
 
 pub(crate) fn get_kind(piece: &Piece) -> Kind {
     match piece.0 {
-        COLOUR::Colour::White(k) => k,
-        COLOUR::Colour::Black(k) => k,
+        colour::Colour::White(k) => k,
+        colour::Colour::Black(k) => k,
     }
 }
 

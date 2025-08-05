@@ -2,6 +2,8 @@ use std::{fmt, ops::{Index, IndexMut}};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
+use super::error;
+
 // The board positions
 #[derive(Debug, EnumIter, Clone, Copy, PartialEq, Eq)]
 pub enum Position {
@@ -30,7 +32,7 @@ impl From<&Position> for u64 {
 }
 
 impl TryFrom<u8> for Position {
-    type Error = ();
+    type Error = error::Error;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value & 0x3F {
@@ -106,7 +108,7 @@ impl TryFrom<u8> for Position {
             62 => Ok(Position::G1),
             63 => Ok(Position::H1),
 
-            _ => Err(()),
+            _ => Err(error::Error::TypeCoversiton(format!("Invalid u8 for position: {}", value))),
         }
     }
 }

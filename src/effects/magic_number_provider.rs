@@ -1,16 +1,16 @@
-use crate::board::position as POSITION;
-use crate::consts as CONSTS;
-use crate::traits::const_lookup as CONST_LOOKUP;
+use crate::board::position;
+use crate::consts;
+use crate::traits::const_lookup;
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct MagicNumberProvider;
 
-impl CONST_LOOKUP::ConstMagicNumber for MagicNumberProvider {
-    fn bishop(&self, pos: POSITION::Position) -> u64 {
-        CONSTS::BISHOP_MAGIC_NUMBERS[pos]
+impl const_lookup::ConstMagicNumber for MagicNumberProvider {
+    fn bishop(&self, pos: position::Position) -> u64 {
+        consts::BISHOP_MAGIC_NUMBERS[pos]
     }
 
-    fn rook(&self, pos: POSITION::Position) -> u64 {
-        CONSTS::ROOK_MAGIC_NUMBERS[pos]
+    fn rook(&self, pos: position::Position) -> u64 {
+        consts::ROOK_MAGIC_NUMBERS[pos]
     }
 }

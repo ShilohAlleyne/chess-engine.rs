@@ -3,13 +3,13 @@ use std::fmt::{self};
 use colored::Colorize;
 use itertools::Itertools;
 
-use crate::board::{pieces as PIECE, position as POSITION};
+use crate::board::{pieces, position};
 
 #[derive(Debug)]
 pub struct Detail {
-    pub piece: PIECE::Piece,
-    pub source: POSITION::Position,
-    pub target: POSITION::Position,
+    pub piece: pieces::Piece,
+    pub source: position::Position,
+    pub target: position::Position,
 }
 
 
@@ -85,23 +85,23 @@ pub fn traits(action: Move) -> impl Iterator<Item = MoveTrait> {
     })
 }
 
-pub fn piece(action: Move) -> Option<PIECE::Piece> {
-    PIECE::try_from_u8(((action.0 >> 16) & 0xF) as u8)
+pub fn piece(action: Move) -> Option<pieces::Piece> {
+    pieces::try_from_u8(((action.0 >> 16) & 0xF) as u8)
         .expect("Move has invalid piece configuration.")
 }
 
-pub fn source(action: Move) -> POSITION::Position {
-    POSITION::Position::try_from(((action.0 >> 10) & 0x3F) as u8)
+pub fn source(action: Move) -> position::Position {
+    position::Position::try_from(((action.0 >> 10) & 0x3F) as u8)
         .expect("Move has invalid source position configuration.")
 }
 
-pub fn target(action: Move) -> POSITION::Position {
-    POSITION::Position::try_from(((action.0 >> 4) & 0x3F) as u8)
+pub fn target(action: Move) -> position::Position {
+    position::Position::try_from(((action.0 >> 4) & 0x3F) as u8)
         .expect("Move has invalid target positon configuration.")
 }
 
-pub fn capture(action: Move) -> Option<PIECE::Piece> {
-    PIECE::try_from_u8((action.0 & 0xF) as u8)
+pub fn capture(action: Move) -> Option<pieces::Piece> {
+    pieces::try_from_u8((action.0 & 0xF) as u8)
         .expect("Move has invalid capture piece configuration.")
 }
 
@@ -182,7 +182,7 @@ impl MoveBuilder {
         result
     }
 
-    pub fn set_piece(self, piece: PIECE::Piece) -> Self {
+    pub fn set_piece(self, piece: pieces::Piece) -> Self {
         let mut result = self;
 
         let piece_bit: u8 = piece.into();
@@ -191,7 +191,7 @@ impl MoveBuilder {
         result
     }
 
-    pub fn set_source(self, src: POSITION::Position) -> Self {
+    pub fn set_source(self, src: position::Position) -> Self {
         let mut result = self;
 
         let pos_bits: u8 = src.into();
@@ -200,7 +200,7 @@ impl MoveBuilder {
         result
     }
 
-    pub fn set_target(self, trgt: POSITION::Position) -> Self {
+    pub fn set_target(self, trgt: position::Position) -> Self {
         let mut result = self;
 
         let trgt_bits: u8 = trgt.into();
@@ -209,7 +209,7 @@ impl MoveBuilder {
         result
     }
 
-    pub fn captures(self, captures: PIECE::Piece) -> Self {
+    pub fn captures(self, captures: pieces::Piece) -> Self {
         let mut result = self;
 
         let cap: u8 = captures.into();

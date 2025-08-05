@@ -1,10 +1,10 @@
 // for the first pass, I'll just use u64
 use super::{
-    attack_generation as ATTK_GEN,
-    attack_masks as ATTK_MSK,
+    attack_generation,
+    attack_masks,
 };
 use crate::{
-    board::{bitboard::Bitboard, colour as COLOUR, position::Position},
+    board::{bitboard, colour, position},
     consts::BIT_TABLE,
 };
 use rand::Rng;
@@ -49,26 +49,26 @@ fn transform(b: u64, magic: u64, bits: u32) -> u32 {
     ((b.wrapping_mul(magic)) >> (64 - bits)) as u32
 }
 
-pub fn find_magic(sq: Position, m: usize, bishop: bool) -> u64 {
+pub fn find_magic(sq: position::Position, m: usize, bishop: bool) -> u64 {
     let mut b: [u64; 4096] = [0u64; 4096];
     let mut a: [u64; 4096] = [0u64; 4096];
 
     let mask: u64 = if bishop {
-        ATTK_MSK::mask_bishop_attacks(sq, &COLOUR::Colour::White(()))
+        attack_masks::mask_bishop_attacks(sq, &colour::Colour::White(()))
     } else {
-        ATTK_MSK::mask_rook_attacks(sq, &COLOUR::Colour::White(()))
+        attack_masks::mask_rook_attacks(sq, &colour::Colour::White(()))
     }
     .0;
 
     let n = mask.count_ones();
 
     for i in 0..(1 << n) {
-        let occ = Bitboard(index_u64(i, n as usize, mask));
+        let occ = bitboard::Bitboard(index_u64(i, n as usize, mask));
         b[i] = occ.0;
         a[i] = if bishop {
-            ATTK_GEN::fly_gen_bishop_attks(sq, &occ).0
+            attack_generation::fly_gen_bishop_attks(sq, &occ).0
         } else {
-            ATTK_GEN::fly_gen_rook_attks(sq, &occ).0
+            attack_generation::fly_gen_rook_attks(sq, &occ).0
         };
     }
 

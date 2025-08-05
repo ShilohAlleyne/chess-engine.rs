@@ -6,17 +6,17 @@ use std::{
 use itertools::Itertools;
 
 use crate::{
-    board::castling as CR, board::colour as COLOUR, board::pieces as PIECE,
-    board::position as POSITION, gamestate::boardstate as BOARDSTATE,
+    board::castling, board::colour, board::pieces,
+    board::position, gamestate::boardstate,
 };
 
 #[derive(Debug)]
 enum Token {
-    Material(PIECE::Piece),
+    Material(pieces::Piece),
     EmptySquares(u32),
-    ActiveColour(COLOUR::Colour<()>),
-    Castling(CR::Castling),
-    Enpassant(Option<POSITION::Position>),
+    ActiveColour(colour::Colour<()>),
+    Castling(castling::Castling),
+    Enpassant(Option<position::Position>),
     HalfMove(u32),
     FullMove(u32),
     NextRank,
@@ -49,9 +49,9 @@ impl Region {
 }
 
 // This will need to be a result
-pub(crate) fn parse(input: &str) -> Result<BOARDSTATE::State, crate::parsers::error::Error> {
+pub(crate) fn parse(input: &str) -> Result<boardstate::State, crate::parsers::error::Error> {
     // Init chessboard
-    let mut board: BOARDSTATE::State = BOARDSTATE::State::default();
+    let mut board: boardstate::State = boardstate::State::default();
 
     // Init x & y postions
     // The file counter gets reset each encountered
@@ -116,15 +116,15 @@ fn tokenize(input: &str) -> Vec<Token> {
                     region.advance();
                     Token::NextRegion
                 }
-                _ => match PIECE::Piece::try_from(&character) {
+                _ => match pieces::Piece::try_from(&character) {
                     Ok(p) => Token::Material(p),
                     Err(_) => Token::Err(i, character),
                 },
             },
 
             Region::ActiveColour => match character {
-                'w' => Token::ActiveColour(COLOUR::Colour::White(())),
-                'b' => Token::ActiveColour(COLOUR::Colour::Black(())),
+                'w' => Token::ActiveColour(colour::Colour::White(())),
+                'b' => Token::ActiveColour(colour::Colour::Black(())),
                 ' ' => {
                     region.advance();
                     Token::NextRegion
@@ -133,11 +133,11 @@ fn tokenize(input: &str) -> Vec<Token> {
             },
 
             Region::CastlingRights => match character {
-                'K' => Token::Castling(CR::Castling::WK),
-                'Q' => Token::Castling(CR::Castling::WQ),
-                'k' => Token::Castling(CR::Castling::RK),
-                'q' => Token::Castling(CR::Castling::RQ),
-                '-' => Token::Castling(CR::Castling::None),
+                'K' => Token::Castling(castling::Castling::WK),
+                'Q' => Token::Castling(castling::Castling::WQ),
+                'k' => Token::Castling(castling::Castling::RK),
+                'q' => Token::Castling(castling::Castling::RQ),
+                '-' => Token::Castling(castling::Castling::None),
                 ' ' => {
                     region.advance();
                     Token::NextRegion
@@ -154,7 +154,7 @@ fn tokenize(input: &str) -> Vec<Token> {
 
                     if let '1'..='8' = next_char.1 {
                         chars.next();
-                        let pos = POSITION::Position::from_chars(character, next_char.1);
+                        let pos = position::Position::from_chars(character, next_char.1);
                         match pos {
                             Some(p) => Token::Enpassant(Some(p)),
                             None => Token::Err(i, character),
@@ -216,20 +216,20 @@ fn parse_number(start: char, chars: &mut Peekable<Enumerate<Chars>>) -> u32 {
 }
 
 // serialize state to fen
-pub fn serialize(state: BOARDSTATE::State) -> Result<String, crate::parsers::error::Error> {
+pub fn serialize(state: boardstate::State) -> Result<String, crate::parsers::error::Error> {
     let rows = [0..8, 8..16, 16..24, 24..32, 32..40, 40..48, 48..56, 56..64];
 
     let fen_rows = rows
         .into_iter()
         .map(|row| {
             // Get piece at pos
-            row.map(|sq| -> Result<Option<PIECE::Piece>, super::error::Error> {
-                let pos = POSITION::Position::from_u32(sq as u32).ok_or_else(|| {
+            row.map(|sq| -> Result<Option<pieces::Piece>, super::error::Error> {
+                let pos = position::Position::from_u32(sq as u32).ok_or_else(|| {
                     super::error::Error::Serialization(
                         "Invalid boardstate for serialization".to_owned(),
                     )
                 })?;
-                Ok(BOARDSTATE::get_piece_at_pos(&state, pos))
+                Ok(boardstate::get_piece_at_pos(&state, pos))
             })
             .collect::<Result<Vec<_>, _>>()?
             .into_iter()
@@ -276,23 +276,23 @@ pub fn serialize(state: BOARDSTATE::State) -> Result<String, crate::parsers::err
         .collect::<Result<Vec<_>, _>>()?;
 
     let side_to_move = match state.side_to_move {
-        COLOUR::Colour::White(()) => "w",
-        COLOUR::Colour::Black(()) => "b",
+        colour::Colour::White(()) => "w",
+        colour::Colour::Black(()) => "b",
     }
     .to_owned();
 
-    let castling = CR::castling_rights_from_bits(&state.castling)
+    let castling = castling::castling_rights_from_bits(state.castling)
         .map(|cr| match cr {
-            CR::Castling::None => "-",
-            CR::Castling::WK => "K",
-            CR::Castling::WQ => "Q",
-            CR::Castling::RK => "k",
-            CR::Castling::RQ => "q",
+            castling::Castling::None => "-",
+            castling::Castling::WK => "K",
+            castling::Castling::WQ => "Q",
+            castling::Castling::RK => "k",
+            castling::Castling::RQ => "q",
         })
         .join("");
 
     let enpassant = match state.en_passant {
-        Some(e) => POSITION::to_string(e),
+        Some(e) => position::to_string(e),
         None => "-".to_owned(),
     };
 

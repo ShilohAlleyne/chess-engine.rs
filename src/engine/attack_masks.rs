@@ -1,17 +1,17 @@
-use crate::board::{bitboard as BITBOARD, colour as COLOUR, position as POSITION};
-use crate::traits::const_lookup as CONST_LOOKUP;
+use crate::board::{bitboard, colour, position};
+use crate::traits::const_lookup;
 
 // === Attack Masks ===
-pub(crate) fn mask_pawn_attacks<C: CONST_LOOKUP::ConstFileMask>(
-    position: POSITION::Position,
-    side: &COLOUR::Colour<()>,
+pub(crate) fn mask_pawn_attacks<C: const_lookup::ConstFileMask>(
+    position: position::Position,
+    side: &colour::Colour<()>,
     lookup: C,
-) -> BITBOARD::Bitboard {
+) -> bitboard::Bitboard {
     let mut attacks: u64 = 0;
-    let bitboard = BITBOARD::Bitboard::new().set_bit(position);
+    let bitboard = bitboard::Bitboard::new().set_bit(position);
 
     match side {
-        COLOUR::Colour::White(()) => {
+        colour::Colour::White(()) => {
             if (bitboard.0 >> 7) & lookup.not_a_file() != 0 {
                 attacks |= bitboard.0 >> 7;
             }
@@ -19,7 +19,7 @@ pub(crate) fn mask_pawn_attacks<C: CONST_LOOKUP::ConstFileMask>(
                 attacks |= bitboard.0 >> 9;
             }
         }
-        COLOUR::Colour::Black(()) => {
+        colour::Colour::Black(()) => {
             if (bitboard.0 << 7) & lookup.not_h_file() != 0 {
                 attacks |= bitboard.0 << 7;
             }
@@ -29,16 +29,16 @@ pub(crate) fn mask_pawn_attacks<C: CONST_LOOKUP::ConstFileMask>(
         }
     };
 
-    BITBOARD::Bitboard::from(attacks)
+    bitboard::Bitboard::from(attacks)
 }
 
-pub(crate) fn mask_knight_attacks<C: CONST_LOOKUP::ConstFileMask>(
-    position: POSITION::Position,
-    _side: &COLOUR::Colour<()>,
+pub(crate) fn mask_knight_attacks<C: const_lookup::ConstFileMask>(
+    position: position::Position,
+    _side: &colour::Colour<()>,
     lookup: C,
-) -> BITBOARD::Bitboard {
+) -> bitboard::Bitboard {
     let mut attacks: u64 = 0;
-    let bitboard = BITBOARD::Bitboard::new().set_bit(position);
+    let bitboard = bitboard::Bitboard::new().set_bit(position);
 
     // generate knight attacks
     if bitboard.0 >> 17 & lookup.not_h_file() != 0 {
@@ -67,15 +67,15 @@ pub(crate) fn mask_knight_attacks<C: CONST_LOOKUP::ConstFileMask>(
         attacks |= bitboard.0 << 6;
     }
 
-    BITBOARD::Bitboard::from(attacks)
+    bitboard::Bitboard::from(attacks)
 }
 
-pub(crate) fn mask_king_attacks<C: CONST_LOOKUP::ConstFileMask>(
-    position: POSITION::Position,
-    _side: &COLOUR::Colour<()>,
+pub(crate) fn mask_king_attacks<C: const_lookup::ConstFileMask>(
+    position: position::Position,
+    _side: &colour::Colour<()>,
     lookup: C,
-) -> BITBOARD::Bitboard {
-    let bitboard = BITBOARD::Bitboard::new().set_bit(position);
+) -> bitboard::Bitboard {
+    let bitboard = bitboard::Bitboard::new().set_bit(position);
     let mut attacks: u64 = 0;
 
     // generate knight attacks
@@ -105,13 +105,13 @@ pub(crate) fn mask_king_attacks<C: CONST_LOOKUP::ConstFileMask>(
         attacks |= bitboard.0 << 1;
     }
 
-    BITBOARD::Bitboard::from(attacks)
+    bitboard::Bitboard::from(attacks)
 }
 
 pub(crate) fn mask_bishop_attacks(
-    position: POSITION::Position,
-    _side: &COLOUR::Colour<()>,
-) -> BITBOARD::Bitboard {
+    position: position::Position,
+    _side: &colour::Colour<()>,
+) -> bitboard::Bitboard {
     let mut mask = 0u64;
 
     let t_rank = position as u64 / 8;
@@ -133,13 +133,13 @@ pub(crate) fn mask_bishop_attacks(
         }
     }
 
-    BITBOARD::Bitboard::from(mask)
+    bitboard::Bitboard::from(mask)
 }
 
 pub(crate) fn mask_rook_attacks(
-    position: POSITION::Position,
-    _side: &COLOUR::Colour<()>,
-) -> BITBOARD::Bitboard {
+    position: position::Position,
+    _side: &colour::Colour<()>,
+) -> bitboard::Bitboard {
     let mut attacks: u64 = 0;
     let tb = |r: u64, f: u64| (r * 8 + f);
 
@@ -157,5 +157,5 @@ pub(crate) fn mask_rook_attacks(
         .chain((1..t_file).rev())
         .fold(attacks, |acc, f| acc | 1u64 << tb(t_rank, f));
 
-    BITBOARD::Bitboard::from(attacks)
+    bitboard::Bitboard::from(attacks)
 }

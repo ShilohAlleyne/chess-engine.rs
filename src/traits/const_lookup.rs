@@ -1,4 +1,4 @@
-use crate::board::position as POSITION;
+use crate::board::position;
 
 // === traits for signalling const lookup quasi-side effects ===
 pub trait ConstFileMask {
@@ -9,11 +9,11 @@ pub trait ConstFileMask {
 }
 
 pub trait ConstMagicNumber {
-    fn bishop(&self, pos: POSITION::Position) -> u64;
-    fn rook(&self, pos: POSITION::Position) -> u64;
+    fn bishop(&self, pos: position::Position) -> u64;
+    fn rook(&self, pos: position::Position) -> u64;
 }
 
 pub trait RelaventBits {
-    fn bishop(&self, pos: POSITION::Position) -> u8;
-    fn rook(&self, pos: POSITION::Position) -> u8;
+    fn bishop(&self, pos: position::Position) -> u8;
+    fn rook(&self, pos: position::Position) -> u8;
 }

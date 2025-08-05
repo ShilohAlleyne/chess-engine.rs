@@ -1,4 +1,4 @@
-use crate::board::position as POSITION;
+use crate::board::position;
 use itertools::Itertools;
 use std::fmt;
 use std::num::Wrapping;
@@ -165,7 +165,7 @@ impl Not for Bitboard {
 
 // === LSB iteration ===
 impl Iterator for Bitboard {
-    type Item = POSITION::Position;
+    type Item = position::Position;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.is_empty() {
@@ -186,7 +186,7 @@ impl fmt::Display for Bitboard {
             .map(|x| {
                 (0..8)
                     .map(|y| {
-                        if let Some(pos) = POSITION::Position::from_u64(x * 8 + y) {
+                        if let Some(pos) = position::Position::from_u64(x * 8 + y) {
                             if self.is_occupied(pos) {
                                 1
                             } else {
@@ -244,7 +244,7 @@ impl Bitboard {
         self.0 |= 1u64 << pos
     }
 
-    pub fn pop_bit(self, position: POSITION::Position) -> Self {
+    pub fn pop_bit(self, position: position::Position) -> Self {
         let pos: u64 = position.into();
         if self.is_occupied(position) {
             self ^ 1u64 << pos
@@ -255,7 +255,7 @@ impl Bitboard {
 
     // Pops a bit at a given position
     // Mutates self inplace
-    pub fn mutate_pop_bit(&mut self, position: POSITION::Position) {
+    pub fn mutate_pop_bit(&mut self, position: position::Position) {
         let pos = position as u64;
         if self.is_occupied(pos) {
             self.0 ^= 1u64 << pos;
@@ -281,11 +281,11 @@ impl Bitboard {
     }
 
     // Get the index of the least significant bitboard
-    pub fn get_ls1b(&self) -> Option<POSITION::Position> {
+    pub fn get_ls1b(&self) -> Option<position::Position> {
         if self.0 == 0 {
             None
         } else {
-            POSITION::Position::from_u32(self.0.trailing_zeros())
+            position::Position::from_u32(self.0.trailing_zeros())
         }
     }
 
