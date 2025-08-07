@@ -54,7 +54,7 @@ impl fmt::Display for Move {
             "Move: {:08X} | Traits: [{}] | Piece: {} | Movement: {} -> {} | Captures: {}",
             self.0,
             traits_str,
-            piece(*self).expect("Piece to move."),
+            piece(*self).expect("Invalid piece configureation."),
             source(*self),
             target(*self),
             cap,
@@ -184,39 +184,36 @@ impl MoveBuilder {
 
     pub fn set_piece(self, piece: pieces::Piece) -> Self {
         let mut result = self;
-
         let piece_bit: u8 = piece.into();
+        result.0 &= !(0xF << 16); // Clear bits 16–19
         result.0 |= (piece_bit as u32) << 16;
-
         result
     }
 
     pub fn set_source(self, src: position::Position) -> Self {
         let mut result = self;
-
-        let pos_bits: u8 = src.into();
+        let pos_bits: u8 = src as u8;
+        result.0 &= !(0x3F << 10); // Clear bits 10–15
         result.0 |= (pos_bits as u32) << 10;
-
         result
     }
 
     pub fn set_target(self, trgt: position::Position) -> Self {
         let mut result = self;
-
-        let trgt_bits: u8 = trgt.into();
+        let trgt_bits: u8 = trgt as u8;
+        result.0 &= !(0x3F << 4); // Clear bits 4–9
         result.0 |= (trgt_bits as u32) << 4;
-
         result
     }
 
     pub fn captures(self, captures: pieces::Piece) -> Self {
         let mut result = self;
-
         let cap: u8 = captures.into();
+        result.0 &= !0xF; // Clear bits 0–3
         result.0 |= cap as u32;
-
         result
     }
+
 
     pub fn build(self) -> Move {
         Move(self.0)

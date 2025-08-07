@@ -20,6 +20,12 @@ impl CastlingRights {
     pub fn toggle_castling_rights(&mut self, right: Castling) {
         self.0 ^= right.get_castlings_bits()
     }
+
+    // Constructs a new Castling rights bitmask from a slice of rights.
+    pub fn from_rights(rights: &[Castling]) -> Self {
+        let bits = rights.iter().fold(0, |acc, r| acc | r.get_castlings_bits());
+        Self(bits)
+    }
 }
 
 impl Default for CastlingRights {

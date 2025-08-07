@@ -93,9 +93,9 @@ pub(crate) fn parse(input: &str) -> Result<boardstate::State, crate::parsers::er
     // Set a matching occpancy_layer layer
     for (i, bb) in board.material_layer.0.iter().enumerate() {
         if i < 6 {
-            board.occpancy_layer.0[0] |= *bb
+            board.occupancy_layer.0[0] |= *bb
         } else if i > 5 {
-            board.occpancy_layer.0[1] |= *bb
+            board.occupancy_layer.0[1] |= *bb
         }
     }
 

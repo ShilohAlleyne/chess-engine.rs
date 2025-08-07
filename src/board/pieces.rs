@@ -73,12 +73,12 @@ impl From<Piece> for char {
             colour::Colour::White(Kind::Rook)   => 'R',
             colour::Colour::White(Kind::Queen)  => 'Q',
             colour::Colour::White(Kind::King)   => 'K',
-            colour::Colour::Black(Kind::Pawn)     => 'p',
-            colour::Colour::Black(Kind::Knight)   => 'n',
-            colour::Colour::Black(Kind::Bishop)   => 'b',
-            colour::Colour::Black(Kind::Rook)     => 'r',
-            colour::Colour::Black(Kind::Queen)    => 'q',
-            colour::Colour::Black(Kind::King)     => 'k',
+            colour::Colour::Black(Kind::Pawn)   => 'p',
+            colour::Colour::Black(Kind::Knight) => 'n',
+            colour::Colour::Black(Kind::Bishop) => 'b',
+            colour::Colour::Black(Kind::Rook)   => 'r',
+            colour::Colour::Black(Kind::Queen)  => 'q',
+            colour::Colour::Black(Kind::King)   => 'k',
         }
     }
 }
@@ -200,7 +200,7 @@ pub(crate) fn get_kind(piece: &Piece) -> Kind {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Kind {
     Bishop,
     King,

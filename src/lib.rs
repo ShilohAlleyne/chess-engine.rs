@@ -27,11 +27,13 @@ pub mod gamestate {
     pub mod occupancy_layer;
     pub mod material_layer;
     pub mod delta;
+    pub mod move_lens;
 }
 
 pub mod traits {
     pub mod static_lookup;
     pub mod const_lookup;
+    pub mod lens;
 }
 
 pub mod effects {

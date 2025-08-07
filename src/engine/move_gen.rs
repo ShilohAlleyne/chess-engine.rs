@@ -94,7 +94,7 @@ fn generate_pawn_targets(
 
     let target_one = source_square
         .change_rank(forward_one)
-        .filter(|sq| !occupancy_layer::get_both(&chessboard.occpancy_layer).is_occupied(sq));
+        .filter(|sq| !occupancy_layer::get_both(&chessboard.occupancy_layer).is_occupied(sq));
 
     let is_start_rank = matches!(
         (source_square.rank(), chessboard.side_to_move),
@@ -102,7 +102,7 @@ fn generate_pawn_targets(
     );
 
     let target_two = source_square.change_rank(forward_two).filter(|sq| {
-        !occupancy_layer::get_both(&chessboard.occpancy_layer).is_occupied(sq)
+        !occupancy_layer::get_both(&chessboard.occupancy_layer).is_occupied(sq)
             && target_one.is_some()
             && is_start_rank
     });
@@ -226,7 +226,7 @@ where
     A: PRECOMP::StaticAttack + Copy + 'static,
 {
     let targets = lookup.pawn(source_square, chessboard.side_to_move)
-        & chessboard.occpancy_layer.0[chessboard.side_to_move.opp()];
+        & chessboard.occupancy_layer.0[chessboard.side_to_move.opp()];
 
     targets.into_iter().filter_map(move |target| {
         let piece = pieces::from_colour_kind(&chessboard.side_to_move, pieces::Kind::Pawn);
@@ -273,7 +273,7 @@ pub fn generate_castle_moves<A>(
 where
     A: PRECOMP::StaticAttack + Copy + 'static,
 {
-    let occ = occupancy_layer::get_both(&chessboard.occpancy_layer);
+    let occ = occupancy_layer::get_both(&chessboard.occupancy_layer);
     castling::castling_rights_from_bits(chessboard.castling)
         .flat_map(move |cr| match cr {
             castling::Castling::WK if chessboard.side_to_move == colour::Colour::White(()) => {
@@ -344,23 +344,23 @@ where
         let raw_attacks = match piece {
             pieces::Kind::Bishop => lookup.bishop(
                 source_square,
-                occupancy_layer::get_both(&chessboard.occpancy_layer),
+                occupancy_layer::get_both(&chessboard.occupancy_layer),
             ),
             pieces::Kind::Knight => lookup.knight(source_square),
             pieces::Kind::Rook => lookup.rook(
                 source_square,
-                occupancy_layer::get_both(&chessboard.occpancy_layer),
+                occupancy_layer::get_both(&chessboard.occupancy_layer),
             ),
             pieces::Kind::Queen => lookup.queen(
                 source_square,
-                occupancy_layer::get_both(&chessboard.occpancy_layer),
+                occupancy_layer::get_both(&chessboard.occupancy_layer),
             ),
             pieces::Kind::King => lookup.king(source_square),
             // Minor piece
             pieces::Kind::Pawn => unreachable!(),
         };
         // Init attacks
-        let attacks = raw_attacks & !chessboard.occpancy_layer[chessboard.side_to_move];
+        let attacks = raw_attacks & !chessboard.occupancy_layer[chessboard.side_to_move];
 
         attacks.into_iter().map(move |trgt| {
             let detail = MOVE::Detail {
@@ -411,16 +411,16 @@ fn into_check<A: PRECOMP::StaticAttack>(
     let raw_attacks = match pieces::get_kind(&detail.piece) {
         pieces::Kind::Bishop => lookup.bishop(
             detail.target,
-            occupancy_layer::get_both(&chessboard.occpancy_layer),
+            occupancy_layer::get_both(&chessboard.occupancy_layer),
         ),
         pieces::Kind::Knight => lookup.knight(detail.target),
         pieces::Kind::Rook => lookup.rook(
             detail.target,
-            occupancy_layer::get_both(&chessboard.occpancy_layer),
+            occupancy_layer::get_both(&chessboard.occupancy_layer),
         ),
         pieces::Kind::Queen => lookup.queen(
             detail.target,
-            occupancy_layer::get_both(&chessboard.occpancy_layer),
+            occupancy_layer::get_both(&chessboard.occupancy_layer),
         ),
         pieces::Kind::King => lookup.king(detail.target),
         pieces::Kind::Pawn => lookup.pawn(detail.target, chessboard.side_to_move),

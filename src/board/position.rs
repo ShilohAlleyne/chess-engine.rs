@@ -5,6 +5,7 @@ use strum_macros::EnumIter;
 use super::error;
 
 // The board positions
+#[repr(u8)]
 #[derive(Debug, EnumIter, Clone, Copy, PartialEq, Eq)]
 pub enum Position {
     A8, B8, C8, D8, E8, F8, G8, H8,
@@ -109,36 +110,6 @@ impl TryFrom<u8> for Position {
             63 => Ok(Position::H1),
 
             _ => Err(error::Error::TypeCoversiton(format!("Invalid u8 for position: {}", value))),
-        }
-    }
-}
-
-impl From<Position> for u8 {
-    fn from(pos: Position) -> Self {
-        match pos {
-            Position::A8 => 0,  Position::B8 => 1,  Position::C8 => 2,  Position::D8 => 3,
-            Position::E8 => 4,  Position::F8 => 5,  Position::G8 => 6,  Position::H8 => 7,
-
-            Position::A7 => 8,  Position::B7 => 9,  Position::C7 => 10, Position::D7 => 11,
-            Position::E7 => 12, Position::F7 => 13, Position::G7 => 14, Position::H7 => 15,
-
-            Position::A6 => 16, Position::B6 => 17, Position::C6 => 18, Position::D6 => 19,
-            Position::E6 => 20, Position::F6 => 21, Position::G6 => 22, Position::H6 => 23,
-
-            Position::A5 => 24, Position::B5 => 25, Position::C5 => 26, Position::D5 => 27,
-            Position::E5 => 28, Position::F5 => 29, Position::G5 => 30, Position::H5 => 31,
-
-            Position::A4 => 32, Position::B4 => 33, Position::C4 => 34, Position::D4 => 35,
-            Position::E4 => 36, Position::F4 => 37, Position::G4 => 38, Position::H4 => 39,
-
-            Position::A3 => 40, Position::B3 => 41, Position::C3 => 42, Position::D3 => 43,
-            Position::E3 => 44, Position::F3 => 45, Position::G3 => 46, Position::H3 => 47,
-
-            Position::A2 => 48, Position::B2 => 49, Position::C2 => 50, Position::D2 => 51,
-            Position::E2 => 52, Position::F2 => 53, Position::G2 => 54, Position::H2 => 55,
-
-            Position::A1 => 56, Position::B1 => 57, Position::C1 => 58, Position::D1 => 59,
-            Position::E1 => 60, Position::F1 => 61, Position::G1 => 62, Position::H1 => 63,
         }
     }
 }
@@ -248,10 +219,6 @@ impl Position {
         } else {
             Position::iter().find(|&p| p as u32 == value)
         }
-    }
-
-    pub(crate) fn from_coords(rank: u64, file: u64) -> Option<Self> {
-        Position::from_u64((7 - rank) * 8 + file)
     }
 
     pub fn from_chars(file: char, rank: char) -> Option<Self> {

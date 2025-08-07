@@ -8,6 +8,7 @@ use std::{
     slice::Iter,
 };
 use colored::*;
+use array_init::array_init;
 
 // This struct contains the bitboards for all
 // of the pieces
@@ -185,4 +186,36 @@ impl Default for MaterialLayer {
     fn default() -> Self {
         Self::new()
     }
+}
+
+pub fn move_piece(
+    mat_layer: MaterialLayer,
+    piece: pieces::Piece,
+    source: position::Position,
+    target: position::Position,
+) -> [bitboard::Bitboard; 12] {
+    array_init(|i| {
+        if i == piece.index() {
+            mat_layer[i]
+                .pop_bit(source)
+                .set_bit(target)
+        } else {
+            mat_layer[i]
+        }
+    })
+}
+
+pub fn capture_piece(
+    mat_layer: MaterialLayer,
+    capture: pieces::Piece,
+    target: position::Position,
+) -> [bitboard::Bitboard; 12] {
+    array_init(|i| {
+        if i == capture.index() {
+            mat_layer[i]
+                .pop_bit(target)
+        } else {
+            mat_layer[i]
+        }
+    })
 }

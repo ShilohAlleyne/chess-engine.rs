@@ -1,9 +1,6 @@
 use super::{material_layer, occupancy_layer};
 use crate::{
-    board::{
-        bitboard, castling, colour, pieces,
-        position,
-    },
+    board::{bitboard, castling, colour, pieces, position},
     effects::static_attack_provider as STATIC_ATTK_LOOKUP,
     parsers::error::Error,
     traits::static_lookup as PRECOMP,
@@ -15,7 +12,7 @@ use strum::IntoEnumIterator;
 #[derive(Debug, Clone, Copy)]
 pub struct State {
     pub material_layer: material_layer::MaterialLayer,
-    pub occpancy_layer: occupancy_layer::OccupancyLayer,
+    pub occupancy_layer: occupancy_layer::OccupancyLayer,
     pub side_to_move: colour::Colour<()>,
     pub en_passant: Option<position::Position>,
     pub castling: castling::CastlingRights,
@@ -62,7 +59,7 @@ impl Default for State {
     fn default() -> Self {
         Self {
             material_layer: material_layer::MaterialLayer([bitboard::Bitboard::new(); 12]),
-            occpancy_layer: occupancy_layer::OccupancyLayer([bitboard::Bitboard::new(); 2]),
+            occupancy_layer: occupancy_layer::OccupancyLayer([bitboard::Bitboard::new(); 2]),
             side_to_move: colour::Colour::White(()),
             en_passant: None,
             castling: castling::CastlingRights::new(),
@@ -76,13 +73,45 @@ impl State {
     pub fn new() -> Self {
         Self {
             material_layer: material_layer::MaterialLayer::new(),
-            occpancy_layer: occupancy_layer::OccupancyLayer::new(),
+            occupancy_layer: occupancy_layer::OccupancyLayer::new(),
             side_to_move: colour::Colour::White(()),
             en_passant: None,
             castling: castling::CastlingRights::new(),
             half_moves: 0,
             full_moves: 0,
         }
+    }
+
+    pub fn generate_occ(&mut self) {
+        // White occupancy: combine all white piece bitboards
+        self.occupancy_layer =
+            occupancy_layer::OccupancyLayer([bitboard::Bitboard::new(), bitboard::Bitboard::new()]);
+        self.occupancy_layer.0[0] = self.material_layer
+            [pieces::from_colour_kind(&colour::Colour::White(()), pieces::Kind::Rook)]
+            | self.material_layer
+                [pieces::from_colour_kind(&colour::Colour::White(()), pieces::Kind::Knight)]
+            | self.material_layer
+                [pieces::from_colour_kind(&colour::Colour::White(()), pieces::Kind::Bishop)]
+            | self.material_layer
+                [pieces::from_colour_kind(&colour::Colour::White(()), pieces::Kind::Queen)]
+            | self.material_layer
+                [pieces::from_colour_kind(&colour::Colour::White(()), pieces::Kind::King)]
+            | self.material_layer
+                [pieces::from_colour_kind(&colour::Colour::White(()), pieces::Kind::Pawn)];
+
+        // Black occupancy: combine all black piece bitboards
+        self.occupancy_layer.0[1] = self.material_layer
+            [pieces::from_colour_kind(&colour::Colour::Black(()), pieces::Kind::Rook)]
+            | self.material_layer
+                [pieces::from_colour_kind(&colour::Colour::Black(()), pieces::Kind::Knight)]
+            | self.material_layer
+                [pieces::from_colour_kind(&colour::Colour::Black(()), pieces::Kind::Bishop)]
+            | self.material_layer
+                [pieces::from_colour_kind(&colour::Colour::Black(()), pieces::Kind::Queen)]
+            | self.material_layer
+                [pieces::from_colour_kind(&colour::Colour::Black(()), pieces::Kind::King)]
+            | self.material_layer
+                [pieces::from_colour_kind(&colour::Colour::Black(()), pieces::Kind::Pawn)];
     }
 }
 
@@ -102,7 +131,7 @@ pub fn is_attacked<A: PRECOMP::StaticAttack>(
     pos: position::Position,
     sttk_attk: A,
 ) -> bool {
-    let occ = occupancy_layer::get_both(&board.occpancy_layer);
+    let occ = occupancy_layer::get_both(&board.occupancy_layer);
     let attacker = board.side_to_move.opp();
 
     [
